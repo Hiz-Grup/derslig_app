@@ -1,6 +1,7 @@
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
 import 'package:derslig/providers/login_register_page_provider.dart';
+import 'package:derslig/views/login_page.dart';
 import 'package:derslig/views/widgets/dropdown_widget.dart';
 import 'package:derslig/views/widgets/form_field_widget.dart';
 import 'package:derslig/views/widgets/general_button_widget.dart';
@@ -311,7 +312,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     GeneralButtonWidget(
                       text: "Giriş Yap",
                       onPressed: () {
-                        Navigator.of(context).pop();
+                        Navigator.pushReplacementNamed(
+                            context, LoginPage.routeName);
                       },
                       textColor: AppTheme.blue,
                       buttonColor: AppTheme.blue.withOpacity(0.2),

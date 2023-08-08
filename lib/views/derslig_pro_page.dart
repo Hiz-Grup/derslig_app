@@ -1,7 +1,9 @@
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
 import 'package:flutter/material.dart';
-import 'package:purchases_flutter/purchases_flutter.dart' as purchases;
+import 'package:flutter/services.dart';
+
+import 'package:purchases_flutter/purchases_flutter.dart';
 
 class DersligProPage extends StatefulWidget {
   const DersligProPage({Key? key}) : super(key: key);
@@ -11,6 +13,23 @@ class DersligProPage extends StatefulWidget {
 }
 
 class _DersligProPageState extends State<DersligProPage> {
+  @override
+  void initState() {
+    try {
+      Purchases.getOfferings().then((Offerings offerings) {
+        if (offerings.current != null &&
+            offerings.current!.availablePackages.isNotEmpty) {
+          // Display packages for sale
+          print(offerings.current!.availablePackages);
+        }
+      });
+    } catch (e) {
+      // optional error handling
+      // print("GET OFFERINGS ERROR :" + e.toString());
+    }
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,15 +103,13 @@ class _DersligProPageState extends State<DersligProPage> {
                         MaterialButton(
                           onPressed: () async {
                             try {
-                              final offerings =
-                                  await purchases.Purchases.getOfferings();
+                              final offerings = await Purchases.getOfferings();
                               final offering = offerings.current;
                               if (offering != null) {
                                 final package =
                                     offering.availablePackages.first;
                                 final purchase =
-                                    await purchases.Purchases.purchasePackage(
-                                        package);
+                                    await Purchases.purchasePackage(package);
                                 print(purchase);
                               }
                             } catch (e) {

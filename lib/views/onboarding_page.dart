@@ -1,7 +1,10 @@
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
 import 'package:derslig/models/onboarding_model.dart';
+import 'package:derslig/views/login_page.dart';
+import 'package:derslig/views/register_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({Key? key}) : super(key: key);
@@ -13,20 +16,27 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   List<OnboardingModel> pages = [
     OnboardingModel(
-      title: 'Derslig',
-      image: const Icon(Icons.ac_unit),
+      title: 'Dijital Eğitim Platformu',
+      description:
+          'En çok çalışılması gereken konulara odaklanın, hızlı bir şekilde net ve puan artışı sağlayın.',
+      image: "assets/images/onboarding-1.png",
     ),
     OnboardingModel(
-      title: 'Derslig',
-      image: const Icon(Icons.ac_unit),
+      title: 'İnteraktif Animasyonlu Konu Anlatımları',
+      description: 'Derslig Pro ile etkileşimli öğrenme deneyimini yaşayın.',
+      image: "assets/images/onboarding-2.png",
     ),
     OnboardingModel(
-      title: 'Derslig',
-      image: const Icon(Icons.ac_unit),
+      title: 'Başarı Sıralamanı Anında Öğren',
+      description:
+          'Genel katılımlı deneme sınavlarına istediğin zaman katılabilir ve binlerce kişi arasındaki sıralamanı anında öğrenebilirsin.',
+      image: "assets/images/onboarding-3.png",
     ),
   ];
 
   int currentIndex = 0;
+
+  final PageController _pageController = PageController();
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +45,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         children: [
           Expanded(
             child: PageView.builder(
+              controller: _pageController,
               itemCount: pages.length,
               onPageChanged: (value) => setState(() {
                 currentIndex = value;
@@ -46,18 +57,41 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     children: [
                       SizedBox(height: deviceTopPadding(context)),
                       Expanded(
-                        child: Column(
-                          children: [
-                            pages[index].image,
-                            const Spacer(),
-                            Text(
-                              pages[index].title,
-                              textAlign: TextAlign.center,
-                              style: AppTheme.semiBoldTextStyle(context, 24),
-                            ),
-                            const Spacer(),
-                            SizedBox(height: deviceHeightSize(context, 20)),
-                          ],
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: deviceWidthSize(context, 20)),
+                          child: Column(
+                            children: [
+                              const Spacer(),
+                              SvgPicture.asset(
+                                "assets/images/derslig-logo.svg",
+                                width: deviceWidthSize(context, 150),
+                                color: AppTheme.pink,
+                              ),
+                              const Spacer(),
+                              Image.asset(
+                                pages[index].image,
+                                height: deviceHeightSize(context, 300),
+                                width: deviceWidthSize(context, 300),
+                              ),
+                              SizedBox(height: deviceHeightSize(context, 20)),
+                              Text(
+                                pages[index].title,
+                                textAlign: TextAlign.center,
+                                style: AppTheme.semiBoldTextStyle(context, 24),
+                              ),
+                              SizedBox(height: deviceHeightSize(context, 4)),
+                              Text(
+                                pages[index].description,
+                                textAlign: TextAlign.center,
+                                style: AppTheme.lightTextStyle(context, 20),
+                              ),
+                              const Spacer(
+                                flex: 6,
+                              ),
+                              SizedBox(height: deviceHeightSize(context, 20)),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -66,14 +100,60 @@ class _OnboardingPageState extends State<OnboardingPage> {
               },
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              pages.length,
-              (index) => buildDot(index: index),
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: deviceWidthSize(context, 30),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    pages.length,
+                    (index) => buildDot(index: index),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    if (currentIndex != pages.length - 1) {
+                      setState(() {
+                        currentIndex++;
+                        _pageController.animateToPage(
+                          currentIndex,
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeIn,
+                        );
+                      });
+                    } else {
+                      Navigator.pushReplacementNamed(
+                          context, RegisterPage.routeName);
+                    }
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        currentIndex != pages.length - 1
+                            ? "Devam Et"
+                            : "Kayıt Ol",
+                        style: AppTheme.semiBoldTextStyle(context, 24).copyWith(
+                          height: 1.5,
+                        ),
+                      ),
+                      SizedBox(width: deviceWidthSize(context, 10)),
+                      Icon(
+                        Icons.arrow_forward,
+                        color: AppTheme.black,
+                        size: deviceWidthSize(context, 30),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: deviceHeightSize(context, 20)),
+          SizedBox(height: deviceHeightSize(context, 50)),
         ],
       ),
     );
@@ -86,7 +166,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       height: deviceHeightSize(context, 10),
       width: deviceWidthSize(context, currentIndex == index ? 20 : 10),
       decoration: BoxDecoration(
-        color: currentIndex == index ? AppTheme.blue : Colors.grey,
+        color: currentIndex == index ? AppTheme.pink : Colors.grey,
         borderRadius: BorderRadius.circular(20),
       ),
     );
