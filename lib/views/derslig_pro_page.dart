@@ -1,7 +1,13 @@
+import 'dart:async';
+
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
+import 'package:derslig/providers/purchase_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:provider/provider.dart';
 
 import 'package:purchases_flutter/purchases_flutter.dart';
 
@@ -13,25 +19,77 @@ class DersligProPage extends StatefulWidget {
 }
 
 class _DersligProPageState extends State<DersligProPage> {
+  StreamSubscription? _subscription;
+
   @override
   void initState() {
-    try {
-      Purchases.getOfferings().then((Offerings offerings) {
-        if (offerings.current != null &&
-            offerings.current!.availablePackages.isNotEmpty) {
-          // Display packages for sale
-          print(offerings.current!.availablePackages);
-        }
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      context.read<PurchaseProvider>().getProductDetails();
+      final Stream purchaseUpdated = InAppPurchase.instance.purchaseStream;
+      _subscription = purchaseUpdated.listen((purchaseDetailsList) {
+        _listenToPurchaseUpdated(purchaseDetailsList);
+      }, onDone: () {
+        _subscription!.cancel();
+      }, onError: (error) {
+        // handle error here.
+        print("Error : " + error.toString());
       });
-    } catch (e) {
-      // optional error handling
-      // print("GET OFFERINGS ERROR :" + e.toString());
-    }
+    });
     super.initState();
   }
 
+  void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
+    purchaseDetailsList.forEach((PurchaseDetails purchaseDetails) async {
+      print('purchaseDetails: ${purchaseDetails.productID}');
+      if (purchaseDetails.status == PurchaseStatus.pending) {
+        print('pending');
+      } else {
+        if (purchaseDetails.status == PurchaseStatus.error) {
+          print('error');
+          context.read<PurchaseProvider>().setBuyState(BuyState.idle);
+        } else if (purchaseDetails.status == PurchaseStatus.purchased ||
+            purchaseDetails.status == PurchaseStatus.restored) {
+          print('purchased');
+
+          context.read<PurchaseProvider>().setBuyState(BuyState.idle);
+
+          // bool valid = await _verifyPurchase(purchaseDetails);
+          // if (valid) {
+          //   _deliverProduct(purchaseDetails);
+          // } else {
+          //   _handleInvalidPurchase(purchaseDetails);
+          // }
+        }
+        if (purchaseDetails.pendingCompletePurchase) {
+          print('pendingCompletePurchase');
+          await InAppPurchase.instance.completePurchase(purchaseDetails);
+          context.read<PurchaseProvider>().setBuyState(BuyState.idle);
+        }
+      }
+    });
+  }
+
+  buyProduct() async {
+    int selectedPollenIndex =
+        context.read<PurchaseProvider>().selectedPollenIndex;
+
+    final ProductDetails productDetails =
+        context.read<PurchaseProvider>().products[
+            selectedPollenIndex]; // Saved earlier from queryProductDetails().
+
+    final PurchaseParam purchaseParam =
+        PurchaseParam(productDetails: productDetails);
+    // if (_isConsumable(productDetails)) {
+    InAppPurchase.instance.buyConsumable(purchaseParam: purchaseParam);
+    // } else {
+    // InAppPurchase.instance.buyNonConsumable(purchaseParam: purchaseParam);
+    // }
+  }
+
+  List<ProductDetails> _products = [];
   @override
   Widget build(BuildContext context) {
+    _products = context.watch<PurchaseProvider>().products;
     return Scaffold(
       body: SizedBox(
         height: double.infinity,
@@ -53,7 +111,7 @@ class _DersligProPageState extends State<DersligProPage> {
                 ),
               ),
               ...List.generate(
-                4,
+                _products.length,
                 (index) => Container(
                     margin: EdgeInsets.symmetric(
                       horizontal: deviceWidthSize(context, 20),
@@ -70,7 +128,7 @@ class _DersligProPageState extends State<DersligProPage> {
                     child: Column(
                       children: [
                         Text(
-                          "1 Aylık Derslig Pro Üyeliği",
+                          _products[index].title,
                           style: AppTheme.boldTextStyle(context, 16,
                               color: AppTheme.grey),
                         ),
@@ -81,20 +139,20 @@ class _DersligProPageState extends State<DersligProPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "289 ₺",
+                              _products[index].price,
                               style: AppTheme.blackTextStyle(context, 32,
                                   color: AppTheme.blue),
                             ),
-                            Text(
-                              " / ",
-                              style: AppTheme.boldTextStyle(context, 20,
-                                  color: AppTheme.grey),
-                            ),
-                            Text(
-                              "ay",
-                              style: AppTheme.boldTextStyle(context, 20,
-                                  color: AppTheme.blue),
-                            ),
+                            // Text(
+                            //   " / ",
+                            //   style: AppTheme.boldTextStyle(context, 20,
+                            //       color: AppTheme.grey),
+                            // ),
+                            // Text(
+                            //   _products[index].duration,
+                            //   style: AppTheme.boldTextStyle(context, 20,
+                            //       color: AppTheme.blue),
+                            // ),
                           ],
                         ),
                         SizedBox(
@@ -102,19 +160,7 @@ class _DersligProPageState extends State<DersligProPage> {
                         ),
                         MaterialButton(
                           onPressed: () async {
-                            try {
-                              final offerings = await Purchases.getOfferings();
-                              final offering = offerings.current;
-                              if (offering != null) {
-                                final package =
-                                    offering.availablePackages.first;
-                                final purchase =
-                                    await Purchases.purchasePackage(package);
-                                print(purchase);
-                              }
-                            } catch (e) {
-                              print(e);
-                            }
+                            buyProduct();
                           },
                           color: AppTheme.pink,
                           shape: RoundedRectangleBorder(
@@ -139,4 +185,16 @@ class _DersligProPageState extends State<DersligProPage> {
       ),
     );
   }
+}
+
+class ProductModel {
+  final String title;
+  final String price;
+  final String duration;
+
+  ProductModel({
+    required this.title,
+    required this.price,
+    required this.duration,
+  });
 }
