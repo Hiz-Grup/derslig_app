@@ -21,18 +21,18 @@ class _SplashPageState extends State<SplashPage> {
     Future.delayed(const Duration(seconds: 2)).then(
       (_) => SchedulerBinding.instance.addPostFrameCallback(
         (_) {
-          // if (HiveHelpers.getOnboardingStatus() == false) {
-          //   if (HiveHelpers.getUserStatus() == true) {
-          //     Navigator.pushReplacementNamed(context, HomePage.routeName);
-          //   } else {
-          //     Navigator.pushReplacementNamed(context, LoginPage.routeName);
-          //   }
-          // } else {
-          //   HiveHelpers.saveOnboardingStatus();
-          //   Navigator.pushReplacementNamed(context, OnboardingPage.routeName);
-          // }
-          context.read<PurchaseProvider>().initPlatformState().then((value) =>
-              Navigator.pushReplacementNamed(context, HomePage.routeName));
+          context.read<PurchaseProvider>().initPlatformState().then((value) {
+            if (HiveHelpers.getOnboardingStatus() == false) {
+              if (HiveHelpers.getUserStatus() == true) {
+                Navigator.pushReplacementNamed(context, HomePage.routeName);
+              } else {
+                Navigator.pushReplacementNamed(context, LoginPage.routeName);
+              }
+            } else {
+              HiveHelpers.saveOnboardingStatus();
+              Navigator.pushReplacementNamed(context, OnboardingPage.routeName);
+            }
+          });
         },
       ),
     );
@@ -44,8 +44,8 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: const Center(
+    return const Scaffold(
+      body: Center(
         child: CircularProgressIndicator(),
       ),
     );

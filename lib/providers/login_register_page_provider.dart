@@ -1,6 +1,10 @@
+import 'package:derslig/controller/login_register_page_controller.dart';
+import 'package:derslig/helper/locator.dart';
+import 'package:derslig/models/login_response_model.dart';
 import 'package:flutter/material.dart';
 
 class LoginRegisterPageProvider with ChangeNotifier {
+  final _loginRegisterPageController = locator<LoginRegisterPageController>();
   int _schoolLevelIndex = -1;
   int get schoolLevelIndex => _schoolLevelIndex;
   set schoolLevelIndex(index) {
@@ -29,4 +33,7 @@ class LoginRegisterPageProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<LoginResponseModel?> login(String email, String password) async {
+    return await _loginRegisterPageController.login(email, password);
+  }
 }

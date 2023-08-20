@@ -2,13 +2,10 @@ import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
 import 'package:derslig/models/page_model.dart';
 import 'package:derslig/providers/page_provider.dart';
-import 'package:derslig/views/back_button_widget.dart';
 import 'package:derslig/views/derslig_pro_page.dart';
 import 'package:derslig/views/web_view_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

@@ -10,15 +10,15 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'services/navigation_service.dart';
-
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   setupLocator();
 
   await Hive.initFlutter();
   await Future.wait([
     Hive.openBox('user'),
     Hive.openBox('onboarding'),
+    Hive.openBox('login'),
   ]);
 
   runApp(MultiProvider(

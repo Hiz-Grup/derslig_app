@@ -5,11 +5,8 @@ import 'package:derslig/constants/size.dart';
 import 'package:derslig/providers/purchase_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:provider/provider.dart';
-
-import 'package:purchases_flutter/purchases_flutter.dart';
 
 class DersligProPage extends StatefulWidget {
   const DersligProPage({Key? key}) : super(key: key);

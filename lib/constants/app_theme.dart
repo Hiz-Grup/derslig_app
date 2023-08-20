@@ -8,6 +8,7 @@ class AppTheme {
   static const Color blue = Color(0xFF2DB1B8);
   static const Color pink = Color(0xFFE40169);
   static const Color red = Color(0xFFE40169);
+  static const Color green = Color(0xFF2DB1B8);
   static const Color yellow = Color(0xFFFCD638);
 
   static const appFontFamily = 'Nunito';

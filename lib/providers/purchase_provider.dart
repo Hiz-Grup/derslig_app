@@ -1,8 +1,5 @@
 import 'dart:io';
 
-import 'package:derslig/controllers/purchase_controller.dart';
-import 'package:derslig/helper/locator.dart';
-import 'package:derslig/models/general_response_model.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -10,8 +7,6 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 enum BuyState { idle, busy }
 
 class PurchaseProvider with ChangeNotifier {
-  final _purchaseController = locator<PurchaseController>();
-
   BuyState buyState = BuyState.idle;
 
   List<ProductDetails> products = [];
@@ -30,7 +25,6 @@ class PurchaseProvider with ChangeNotifier {
     PurchasesConfiguration? configuration;
     if (Platform.isAndroid) {
       // configuration = PurchasesConfiguration(<public_google_api_key>);
-
     } else if (Platform.isIOS) {
       configuration =
           PurchasesConfiguration("appl_VjzrIVjfeEsQXHftXmwCdBasNQK");

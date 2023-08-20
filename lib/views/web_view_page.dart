@@ -1,9 +1,11 @@
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
+import 'package:derslig/helper/hive_helpers.dart';
+import 'package:derslig/models/login_response_model.dart';
 import 'package:derslig/providers/page_provider.dart';
-import 'package:derslig/views/back_button_widget.dart';
+import 'package:derslig/views/splash_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -18,8 +20,35 @@ class WebViewPage extends StatefulWidget {
 class _WebViewPageState extends State<WebViewPage> {
   WebViewController controller = WebViewController();
 
+  List<WebViewCookie> cookies = [];
   @override
   void initState() {
+    // SchedulerBinding.instance.addPostFrameCallback((_) async {
+    LoginResponseModel? loginResponseModel = HiveHelpers.getLoginModel();
+    if (loginResponseModel == null) {
+      HiveHelpers.saveUserStatus(false);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        SplashPage.routeName,
+        (route) => false,
+      );
+    } else {
+      cookies = [
+        WebViewCookie(
+          name: "XSRF-TOKEN",
+          value: loginResponseModel.xsrfToken,
+          domain: "derslig.com",
+          path: "/",
+        ),
+        WebViewCookie(
+          name: "derslig_cookie",
+          value: loginResponseModel.dersligCookie,
+          domain: "derslig.com",
+          path: "/",
+        ),
+      ];
+    }
+
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
@@ -29,17 +58,17 @@ class _WebViewPageState extends State<WebViewPage> {
             // Update loading bar.
           },
           onPageStarted: (String url) {
-            print("onPageStarted: $url");
+            // print("onPageStarted: $url");
           },
           onPageFinished: (String url) {
-            print("onPageFinished: $url");
+            // print("onPageFinished: $url");
           },
           onWebResourceError: (WebResourceError error) {
             // Handle error.
             print("error: ${error.description}");
           },
           onNavigationRequest: (NavigationRequest request) async {
-            print("request.url: ${request.url}");
+            // print("request.url: ${request.url}");
             if (request.url.contains("https://www.derslig.com/profilim")) {
               return NavigationDecision.navigate;
             } else if (request.url.contains("https://www.derslig.com/pro")) {
@@ -52,7 +81,19 @@ class _WebViewPageState extends State<WebViewPage> {
           },
         ),
       )
-      ..loadRequest(Uri.parse(widget.url));
+      ..loadRequest(
+        Uri.parse(widget.url),
+        headers: {
+          "Cookie": cookies.map((e) => "${e.name}=${e.value}").join("; "),
+        },
+      );
+
+    //get cooikes
+    controller.runJavaScriptReturningResult("document.cookie").then((value) {
+      print("document.cookie: $value");
+    });
+    // });
+
     super.initState();
   }
 
@@ -60,25 +101,25 @@ class _WebViewPageState extends State<WebViewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.white,
-        onPressed: () async {
-          if (await controller.canGoBack()) {
-            controller.goBack();
-          } else {
-            SystemNavigator.pop();
-          }
-        },
-        child: BackButtonWidget(
-          onPressed: () async {
-            if (await controller.canGoBack()) {
-              controller.goBack();
-            } else {
-              SystemNavigator.pop();
-            }
-          },
-        ),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   backgroundColor: Colors.white,
+      //   onPressed: () async {
+      //     if (await controller.canGoBack()) {
+      //       controller.goBack();
+      //     } else {
+      //       SystemNavigator.pop();
+      //     }
+      //   },
+      //   child: BackButtonWidget(
+      //     onPressed: () async {
+      //       if (await controller.canGoBack()) {
+      //         controller.goBack();
+      //       } else {
+      //         SystemNavigator.pop();
+      //       }
+      //     },
+      //   ),
+      // ),
       body: Column(
         children: [
           Container(height: deviceTopPadding(context), color: AppTheme.blue),

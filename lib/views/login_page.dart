@@ -1,9 +1,14 @@
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
+import 'package:derslig/models/login_response_model.dart';
+import 'package:derslig/providers/login_register_page_provider.dart';
+import 'package:derslig/views/home_page.dart';
 import 'package:derslig/views/register_page.dart';
 import 'package:derslig/views/widgets/form_field_widget.dart';
 import 'package:derslig/views/widgets/general_button_widget.dart';
+import 'package:derslig/views/widgets/toast_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -13,8 +18,10 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailController =
+      TextEditingController(text: "ahmetozdemir@derslig.com");
+  final TextEditingController _passwordController =
+      TextEditingController(text: "12345611");
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,7 +117,20 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(height: deviceHeightSize(context, 20)),
                     GeneralButtonWidget(
                       text: "Giriş Yap",
-                      onPressed: () {},
+                      onPressed: () async {
+                        LoginResponseModel? model = await context
+                            .read<LoginRegisterPageProvider>()
+                            .login(
+                              _emailController.text,
+                              _passwordController.text,
+                            );
+
+                        if (model != null) {
+                          Navigator.pushNamed(context, HomePage.routeName);
+                        } else {
+                          ToastWidgets.errorToast(context, "Giriş Yapılamadı!");
+                        }
+                      },
                     ),
                     SizedBox(height: deviceHeightSize(context, 8)),
                     Divider(
