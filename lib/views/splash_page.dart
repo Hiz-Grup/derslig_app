@@ -1,10 +1,19 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/helper/hive_helpers.dart';
+import 'package:derslig/helper/url_launcher_helper.dart';
+import 'package:derslig/models/general_response_model.dart';
+import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:derslig/providers/purchase_provider.dart';
 import 'package:derslig/views/home_page.dart';
-import 'package:derslig/views/login_page.dart';
 import 'package:derslig/views/onboarding_page.dart';
+import 'package:derslig/views/widgets/dialog_widgets.dart';
+import 'package:derslig/views/widgets/no_internet_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:provider/provider.dart';
 
 class SplashPage extends StatefulWidget {
@@ -18,21 +27,39 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
+    InternetConnectionChecker().hasConnection.then((isDeviceConnected) {
+      if (isDeviceConnected == false) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (context) => const NoInternetWidget(),
+          ),
+        );
+      }
+    });
     Future.delayed(const Duration(seconds: 2)).then(
       (_) => SchedulerBinding.instance.addPostFrameCallback(
-        (_) {
-          context.read<PurchaseProvider>().initPlatformState().then((value) {
-            if (HiveHelpers.getOnboardingStatus() == false) {
-              if (HiveHelpers.getUserStatus() == true) {
+        (_) async {
+          GeneralResponseModel versionResponse =
+              await context.read<LoginRegisterPageProvider>().controlVersion();
+          if (versionResponse.success == false) {
+            _showForceUpdateDialog();
+          } else {
+            context
+                .read<PurchaseProvider>()
+                .initPlatformState()
+                .then((value) async {
+              if (HiveHelpers.getOnboardingStatus() == false) {
+                await context.read<LoginRegisterPageProvider>().controlUser();
                 Navigator.pushReplacementNamed(context, HomePage.routeName);
               } else {
-                Navigator.pushReplacementNamed(context, LoginPage.routeName);
+                HiveHelpers.saveOnboardingStatus();
+                Navigator.pushReplacementNamed(
+                    context, OnboardingPage.routeName);
               }
-            } else {
-              HiveHelpers.saveOnboardingStatus();
-              Navigator.pushReplacementNamed(context, OnboardingPage.routeName);
-            }
-          });
+            });
+          }
         },
       ),
     );
@@ -47,6 +74,26 @@ class _SplashPageState extends State<SplashPage> {
     return const Scaffold(
       body: Center(
         child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  void _showForceUpdateDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => DialogWidgets().rowCircularButtonDialogWidget(
+        context,
+        onAcceptButtonPressed: () {
+          UrlLauncherHelper().launch(Platform.isAndroid
+              ? "https://play.google.com/store/apps/details?id=com.focus.pupa"
+              : "https://apps.apple.com/tr/app/focused-pupa/id1579390348");
+        },
+        title: "Uygulama Güncellemesi",
+        content:
+            "Uygulama sürümünüz güncel değil. Lütfen uygulamanızı güncelleyiniz.",
+        buttonText: "Güncelle",
+        color: AppTheme.pink,
       ),
     );
   }

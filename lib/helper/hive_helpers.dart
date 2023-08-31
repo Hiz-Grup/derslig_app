@@ -1,4 +1,5 @@
 import 'package:derslig/models/login_response_model.dart';
+import 'package:derslig/models/user_model.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class HiveHelpers {
@@ -33,4 +34,11 @@ class HiveHelpers {
       return null;
     }
   }
+
+  static void logout() {
+    Hive.box('login').delete('loginModel');
+    Hive.box('user').delete('status');
+  }
+
+  static void saveUserModel(UserModel userModel) {}
 }

@@ -35,7 +35,7 @@ class ApiService {
     log(dersligCookie);
     log(expire);
     // Sat, 16-Dec-2023 13:37:29 GMT
-    DateTime expireDate = DateTime.now().add(Duration(days: 60));
+    DateTime expireDate = DateTime.now().add(const Duration(days: 60));
     // DateTime.parse(expire.replaceAll('GMT', '').split(',')[0].trim());
     log(expireDate.toString());
 
@@ -44,5 +44,33 @@ class ApiService {
       dersligCookie: dersligCookie,
       expireDate: expireDate,
     );
+  }
+
+  Future<http.Response> postRequest(String url, Map<String, String> body,
+      {Map<String, dynamic>? headers}) async {
+    var response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        if (headers != null) ...headers,
+      },
+      body: body,
+    );
+    return response;
+  }
+
+  Future<http.Response> getRequest(String url) async {
+    var response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+      },
+    );
+    print(url);
+    print(response.body);
+
+    return response;
   }
 }

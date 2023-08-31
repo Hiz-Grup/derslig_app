@@ -1,7 +1,7 @@
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
 import 'package:derslig/models/onboarding_model.dart';
-import 'package:derslig/views/register_page.dart';
+import 'package:derslig/views/splash_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -126,7 +126,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       });
                     } else {
                       Navigator.pushReplacementNamed(
-                          context, RegisterPage.routeName);
+                          context, SplashPage.routeName);
                     }
                   },
                   child: Row(

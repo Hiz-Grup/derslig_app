@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
+import 'package:derslig/helper/hive_helpers.dart';
 import 'package:derslig/providers/purchase_provider.dart';
+import 'package:derslig/views/widgets/toast_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -43,13 +45,26 @@ class _DersligProPageState extends State<DersligProPage> {
       } else {
         if (purchaseDetails.status == PurchaseStatus.error) {
           print('error');
+          ToastWidgets.errorToast(
+              context,
+              "Satın alma işlemi başarısız oldu. " +
+                  purchaseDetails.error!.message);
           context.read<PurchaseProvider>().setBuyState(BuyState.idle);
         } else if (purchaseDetails.status == PurchaseStatus.purchased ||
             purchaseDetails.status == PurchaseStatus.restored) {
           print('purchased');
 
           context.read<PurchaseProvider>().setBuyState(BuyState.idle);
-
+          context
+              .read<PurchaseProvider>()
+              .buyProduct(
+                dersligCookie: HiveHelpers.getLoginModel()!.dersligCookie,
+                xsrfToken: HiveHelpers.getLoginModel()!.xsrfToken,
+                index: _products.indexWhere(
+                  (element) => element.id == purchaseDetails.productID,
+                ),
+              )
+              .then((value) => ToastWidgets.responseToast(context, value));
           // bool valid = await _verifyPurchase(purchaseDetails);
           // if (valid) {
           //   _deliverProduct(purchaseDetails);

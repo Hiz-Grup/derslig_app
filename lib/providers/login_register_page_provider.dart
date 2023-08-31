@@ -1,6 +1,9 @@
 import 'package:derslig/controller/login_register_page_controller.dart';
+import 'package:derslig/helper/hive_helpers.dart';
 import 'package:derslig/helper/locator.dart';
+import 'package:derslig/models/general_response_model.dart';
 import 'package:derslig/models/login_response_model.dart';
+import 'package:derslig/models/user_model.dart';
 import 'package:flutter/material.dart';
 
 class LoginRegisterPageProvider with ChangeNotifier {
@@ -33,7 +36,62 @@ class LoginRegisterPageProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool _loginRoute = false;
+  bool get loginRoute => _loginRoute;
+  set loginRoute(value) {
+    _loginRoute = value;
+  }
+
+  bool _isLogin = false;
+  bool get isLogin => _isLogin;
+  set isLogin(value) {
+    _isLogin = value;
+    notifyListeners();
+  }
+
+  UserModel? _userModel;
+  UserModel? get userModel => _userModel;
+  set userModel(value) {
+    _userModel = value;
+    notifyListeners();
+  }
+
   Future<LoginResponseModel?> login(String email, String password) async {
     return await _loginRegisterPageController.login(email, password);
+  }
+
+  Future<GeneralResponseModel> controlVersion() async {
+    return await _loginRegisterPageController.controlVersion();
+  }
+
+  Future<UserModel> userApiControl({
+    required String xsrfToken,
+    required String desligCookie,
+  }) async {
+    return await _loginRegisterPageController.userApiControl(
+      xsrfToken: xsrfToken,
+      desligCookie: desligCookie,
+    );
+  }
+
+  Future<void> controlUser() async {
+    try {
+      LoginResponseModel? loginResponseModel = HiveHelpers.getLoginModel();
+      if (loginResponseModel == null) {
+        isLogin = false;
+      } else {
+        userModel = await userApiControl(
+          xsrfToken: loginResponseModel.xsrfToken,
+          desligCookie: loginResponseModel.dersligCookie,
+        );
+        if (userModel!.isPremium != null) {
+          isLogin = true;
+        } else {
+          isLogin = false;
+        }
+      }
+    } catch (e) {
+      isLogin = false;
+    }
   }
 }

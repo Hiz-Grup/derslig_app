@@ -1,6 +1,7 @@
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
 import 'package:derslig/models/page_model.dart';
+import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:derslig/providers/page_provider.dart';
 import 'package:derslig/views/derslig_pro_page.dart';
 import 'package:derslig/views/web_view_page.dart';
@@ -15,43 +16,52 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  var isDeviceConnected = false;
+
   // Anasayfa, Profilim, Derslig Pro, Dersler
-  List<PageModel> pages = [
-    PageModel(
-      title: "Ana Sayfa",
-      icon: const Icon(Icons.home_rounded),
-      selectedIcon: const Icon(Icons.home_rounded),
-      page: const WebViewPage(
-        url: "https://www.derslig.com/uyelik",
-      ),
-    ),
-    PageModel(
-      title: "Profilim",
-      icon: const Icon(Icons.person_rounded),
-      selectedIcon: const Icon(Icons.person_rounded),
-      page: const WebViewPage(
-        url: "https://www.derslig.com/profilim",
-      ),
-    ),
-    PageModel(
-      title: "Derslig Pro",
-      icon: const Icon(Icons.workspace_premium_rounded),
-      selectedIcon: const Icon(Icons.workspace_premium_rounded),
-      page: const DersligProPage(),
-    ),
-    PageModel(
-      title: "Dersler",
-      icon: const Icon(Icons.menu_book_rounded),
-      selectedIcon: const Icon(Icons.menu_book_rounded),
-      page: const WebViewPage(
-        url: "https://www.derslig.com/dersler",
-      ),
-    ),
-  ];
+  List<PageModel> pages = [];
+
   @override
   Widget build(BuildContext context) {
+    pages = [
+      PageModel(
+        title: "Ana Sayfa",
+        icon: const Icon(Icons.home_rounded),
+        selectedIcon: const Icon(Icons.home_rounded),
+        page: const WebViewPage(
+          url: "https://www.derslig.com/uyelik",
+        ),
+      ),
+      PageModel(
+        title: "Profilim",
+        icon: const Icon(Icons.person_rounded),
+        selectedIcon: const Icon(Icons.person_rounded),
+        page: const WebViewPage(
+          url: "https://www.derslig.com/profilim",
+        ),
+      ),
+      if (context.watch<LoginRegisterPageProvider>().userModel == null ||
+          context.watch<LoginRegisterPageProvider>().userModel?.isPremium !=
+              true)
+        PageModel(
+          title: "Derslig Pro",
+          icon: const Icon(Icons.workspace_premium_rounded),
+          selectedIcon: const Icon(Icons.workspace_premium_rounded),
+          page: const DersligProPage(),
+        ),
+      PageModel(
+        title: "Dersler",
+        icon: const Icon(Icons.menu_book_rounded),
+        selectedIcon: const Icon(Icons.menu_book_rounded),
+        page: const WebViewPage(
+          url: "https://www.derslig.com/dersler",
+        ),
+      ),
+    ];
     return Scaffold(
-      bottomNavigationBar: bottomNavigation(),
+      bottomNavigationBar: context.watch<LoginRegisterPageProvider>().isLogin
+          ? bottomNavigation()
+          : null,
       body: IndexedStack(
         index: context.watch<PageProvider>().currentIndex,
         children: pages.map((e) => e.page).toList(),

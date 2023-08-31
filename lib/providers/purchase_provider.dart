@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:derslig/controller/purchase_controller.dart';
+import 'package:derslig/helper/locator.dart';
+import 'package:derslig/models/general_response_model.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -7,6 +10,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 enum BuyState { idle, busy }
 
 class PurchaseProvider with ChangeNotifier {
+  final _purchaseController = locator<PurchaseController>();
   BuyState buyState = BuyState.idle;
 
   List<ProductDetails> products = [];
@@ -48,6 +52,12 @@ class PurchaseProvider with ChangeNotifier {
       '6aylikdersligpro',
       '12aylikdersligpro',
     };
+    List<String> _kIdsForSort = [
+      '1aylikdersligpro',
+      '3aylikdersligpro',
+      '6aylikdersligpro',
+      '12aylikdersligpro',
+    ];
     final ProductDetailsResponse response =
         await InAppPurchase.instance.queryProductDetails(_kIds);
     if (response.notFoundIDs.isNotEmpty) {
@@ -62,7 +72,10 @@ class PurchaseProvider with ChangeNotifier {
       });
     }
     products = response.productDetails;
-    products.sort((a, b) => a.price.compareTo(b.price));
+
+    //sort
+    products.sort((a, b) =>
+        _kIdsForSort.indexOf(a.id).compareTo(_kIdsForSort.indexOf(b.id)));
 
     notifyListeners();
     // print(products[0].title +
@@ -83,5 +96,17 @@ class PurchaseProvider with ChangeNotifier {
   setBuyState(BuyState state) {
     buyState = state;
     notifyListeners();
+  }
+
+  Future<GeneralResponseModel> buyProduct({
+    required int index,
+    required String xsrfToken,
+    required String dersligCookie,
+  }) async {
+    return await _purchaseController.buyProduct(
+      index: index,
+      xsrfToken: xsrfToken,
+      dersligCookie: dersligCookie,
+    );
   }
 }
