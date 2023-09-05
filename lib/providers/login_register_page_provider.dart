@@ -66,11 +66,11 @@ class LoginRegisterPageProvider with ChangeNotifier {
 
   Future<UserModel> userApiControl({
     required String xsrfToken,
-    required String desligCookie,
+    required String dersligCookie,
   }) async {
     return await _loginRegisterPageController.userApiControl(
       xsrfToken: xsrfToken,
-      desligCookie: desligCookie,
+      dersligCookie: dersligCookie,
     );
   }
 
@@ -82,8 +82,9 @@ class LoginRegisterPageProvider with ChangeNotifier {
       } else {
         userModel = await userApiControl(
           xsrfToken: loginResponseModel.xsrfToken,
-          desligCookie: loginResponseModel.dersligCookie,
+          dersligCookie: loginResponseModel.dersligCookie,
         );
+        print("userModel: ${userModel?.toJson()}");
         if (userModel!.isPremium != null) {
           isLogin = true;
         } else {

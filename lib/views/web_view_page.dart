@@ -6,10 +6,13 @@ import 'package:derslig/helper/hive_helpers.dart';
 import 'package:derslig/models/login_response_model.dart';
 import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:derslig/providers/page_provider.dart';
+import 'package:derslig/views/back_button_widget.dart';
 import 'package:derslig/views/widgets/no_internet_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:provider/provider.dart';
+import 'package:webview_cookie_manager/webview_cookie_manager.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebViewPage extends StatefulWidget {
@@ -103,11 +106,12 @@ class _WebViewPageState extends State<WebViewPage> {
             if (request.url.contains("https://www.derslig.com/profilim")) {
               return NavigationDecision.navigate;
             } else if (request.url.contains("https://www.derslig.com/pro")) {
-              context.read<PageProvider>().currentIndex = 2;
+              if (context.read<LoginRegisterPageProvider>().isLogin)
+                context.read<PageProvider>().currentIndex = 2;
               //dont navigate to url
               return NavigationDecision.prevent;
             } else if (request.url.contains("https://www.derslig.com/cikis")) {
-              HiveHelpers.logout();
+              HiveHelpers.logout(context);
               // Navigator.pushNamedAndRemoveUntil(
               //   context,
               //   SplashPage.routeName,
@@ -136,14 +140,12 @@ class _WebViewPageState extends State<WebViewPage> {
     super.initState();
   }
 
+  final cookieManager = WebviewCookieManager();
   @override
   Widget build(BuildContext context) {
-    controller.runJavaScriptReturningResult("document.cookie").then((value) {
-      log("document.cookie: $value");
-    });
     if (context.read<LoginRegisterPageProvider>().loginRoute == true &&
         url == "https://www.derslig.com/ogrenci") {
-      controller.runJavaScriptReturningResult("document.cookie").then((value) {
+      cookieManager.getCookies('https://derslig.com').then((value) {
         log("document.cookie: $value");
         RegExp regExpXsrg = RegExp(r'XSRF-TOKEN=(.*?);');
         String xsrfToken = regExpXsrg.firstMatch(value.toString())!.group(1)!;
@@ -156,38 +158,48 @@ class _WebViewPageState extends State<WebViewPage> {
           expireDate: DateTime.now().add(const Duration(days: 60)),
         );
         HiveHelpers.saveLoginModel(loginResponseModel);
+        context.read<LoginRegisterPageProvider>().controlUser();
       });
       context.read<LoginRegisterPageProvider>().loginRoute = false;
     }
     return Scaffold(
       backgroundColor: Colors.white,
-      // floatingActionButton: FloatingActionButton(
-      //   backgroundColor: Colors.white,
-      //   onPressed: () async {
-      //     if (await controller.canGoBack()) {
-      //       controller.goBack();
-      //     } else {
-      //       SystemNavigator.pop();
-      //     }
-      //   },
-      //   child: BackButtonWidget(
-      //     onPressed: () async {
-      //       if (await controller.canGoBack()) {
-      //         controller.goBack();
-      //       } else {
-      //         SystemNavigator.pop();
-      //       }
-      //     },
-      //   ),
-      // ),
-      body: Column(
+      body: Stack(
         children: [
-          Container(height: deviceTopPadding(context), color: AppTheme.blue),
-          Expanded(
-            child: WebViewWidget(
-              controller: controller,
-            ),
+          Column(
+            children: [
+              Container(
+                  height: deviceTopPadding(context), color: AppTheme.blue),
+              Expanded(
+                child: WebViewWidget(
+                  controller: controller,
+                ),
+              ),
+            ],
           ),
+          Positioned(
+            bottom: 30,
+            right: 30,
+            child: FloatingActionButton(
+              backgroundColor: Colors.white,
+              onPressed: () async {
+                if (await controller.canGoBack()) {
+                  controller.goBack();
+                } else {
+                  SystemNavigator.pop();
+                }
+              },
+              child: BackButtonWidget(
+                onPressed: () async {
+                  if (await controller.canGoBack()) {
+                    controller.goBack();
+                  } else {
+                    SystemNavigator.pop();
+                  }
+                },
+              ),
+            ),
+          )
         ],
       ),
     );

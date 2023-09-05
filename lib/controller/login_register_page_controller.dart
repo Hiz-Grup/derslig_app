@@ -64,18 +64,26 @@ class LoginRegisterPageController {
     }
   }
 
-  Future<UserModel> userApiControl(
-      {required String xsrfToken, required String desligCookie}) async {
+  Future<UserModel> userApiControl({
+    required String xsrfToken,
+    required String dersligCookie,
+  }) async {
     try {
-      final response = await _apiService.postRequest(
+      print("xsrfToken: $xsrfToken");
+
+      final response = await _apiService.getRequest(
         "https://www.derslig.com/api/user",
-        {},
         headers: {
-          "x-xsrf-token": xsrfToken,
-          "cookie": desligCookie,
+          "Cookie": "XSRF-TOKEN=" +
+              xsrfToken +
+              "; derslig_cookie=" +
+              dersligCookie +
+              ";",
         },
       );
-      UserModel userModel = UserModel.fromJson(json.decode(response.body));
+
+      UserModel userModel =
+          UserModel.fromJson(json.decode(response.body)["data"]);
       HiveHelpers.saveUserModel(userModel);
 
       return userModel;

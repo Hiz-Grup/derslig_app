@@ -4,12 +4,15 @@ import 'package:derslig/services/api_service.dart';
 
 class PurchaseController {
   final _apiService = locator<ApiService>();
-  Future<GeneralResponseModel> buyProduct(
-      {required int index,
-      required String xsrfToken,
-      required String dersligCookie}) async {
-    GeneralResponseModel userCheck =
-        await checkUser(xsrfToken: xsrfToken, dersligCookie: dersligCookie);
+  Future<GeneralResponseModel> buyProduct({
+    required int index,
+    required String xsrfToken,
+    required String dersligCookie,
+  }) async {
+    GeneralResponseModel userCheck = await checkUser(
+      xsrfToken: xsrfToken,
+      dersligCookie: dersligCookie,
+    );
     if (userCheck.success == false) {
       return userCheck;
     }

@@ -29,7 +29,7 @@ class _HomePageState extends State<HomePage> {
         icon: const Icon(Icons.home_rounded),
         selectedIcon: const Icon(Icons.home_rounded),
         page: const WebViewPage(
-          url: "https://www.derslig.com/uyelik",
+          url: "https://www.derslig.com/giris",
         ),
       ),
       PageModel(

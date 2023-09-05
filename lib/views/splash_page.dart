@@ -50,7 +50,7 @@ class _SplashPageState extends State<SplashPage> {
                 .read<PurchaseProvider>()
                 .initPlatformState()
                 .then((value) async {
-              if (HiveHelpers.getOnboardingStatus() == false) {
+              if (HiveHelpers.getOnboardingStatus() == true) {
                 await context.read<LoginRegisterPageProvider>().controlUser();
                 Navigator.pushReplacementNamed(context, HomePage.routeName);
               } else {

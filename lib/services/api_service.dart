@@ -57,19 +57,32 @@ class ApiService {
       },
       body: body,
     );
+
+    print("URL : " + url);
+    print("BODY : " + body.toString());
+    print("RESPONSE : " + response.body);
     return response;
   }
 
-  Future<http.Response> getRequest(String url) async {
+  Future<http.Response> getRequest(String url,
+      {Map<String, dynamic>? headers}) async {
     var response = await http.get(
       Uri.parse(url),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json',
+        if (headers != null) ...headers,
       },
     );
-    print(url);
-    print(response.body);
+
+    print("URL : " +
+        {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          if (headers != null) ...headers,
+        }.toString());
+    print("URL : " + url);
+    print("RESPONSE : " + response.body);
 
     return response;
   }

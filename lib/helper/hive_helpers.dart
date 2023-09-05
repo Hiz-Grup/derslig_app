@@ -1,6 +1,9 @@
 import 'package:derslig/models/login_response_model.dart';
 import 'package:derslig/models/user_model.dart';
+import 'package:derslig/providers/login_register_page_provider.dart';
+import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
 
 class HiveHelpers {
   static Future<void> saveOnboardingStatus() async {
@@ -15,14 +18,10 @@ class HiveHelpers {
     await Hive.box('user').put('status', value);
   }
 
-  static bool getUserStatus() {
-    return Hive.box('user').get('status', defaultValue: false);
-  }
-
   static void saveLoginModel(LoginResponseModel loginResponseModel) {
-    Hive.box('login')
-        .put('loginModel', loginResponseModel.toJson())
-        .then((value) => print("loginModel saved"));
+    Hive.box('login').put('loginModel', loginResponseModel.toJson()).then(
+        (value) =>
+            print("loginModel saved" + loginResponseModel.toJson().toString()));
   }
 
   static LoginResponseModel? getLoginModel() {
@@ -35,10 +34,24 @@ class HiveHelpers {
     }
   }
 
-  static void logout() {
+  static void logout(BuildContext context) {
     Hive.box('login').delete('loginModel');
     Hive.box('user').delete('status');
+    Hive.box('user').delete('userModel');
+    context.read<LoginRegisterPageProvider>().isLogin = false;
+    context.read<LoginRegisterPageProvider>().userModel = null;
   }
 
-  static void saveUserModel(UserModel userModel) {}
+  static void saveUserModel(UserModel userModel) {
+    Hive.box('user').put('userModel', userModel.toJson());
+  }
+
+  static UserModel? getUserModel() {
+    var userModel = Hive.box('user').get('userModel');
+    if (userModel != null) {
+      return UserModel.fromJson(Map<String, dynamic>.from((userModel)));
+    } else {
+      return null;
+    }
+  }
 }
