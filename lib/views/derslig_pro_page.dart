@@ -4,6 +4,7 @@ import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
 import 'package:derslig/helper/hive_helpers.dart';
 import 'package:derslig/providers/purchase_provider.dart';
+import 'package:derslig/views/splash_page.dart';
 import 'package:derslig/views/widgets/toast_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -54,7 +55,7 @@ class _DersligProPageState extends State<DersligProPage> {
             purchaseDetails.status == PurchaseStatus.restored) {
           print('purchased');
 
-          context.read<PurchaseProvider>().setBuyState(BuyState.idle);
+          context.read<PurchaseProvider>().setBuyState(BuyState.busy);
           context
               .read<PurchaseProvider>()
               .buyProduct(
@@ -64,7 +65,18 @@ class _DersligProPageState extends State<DersligProPage> {
                   (element) => element.id == purchaseDetails.productID,
                 ),
               )
-              .then((value) => ToastWidgets.responseToast(context, value));
+              .then(
+            (value) {
+              context.read<PurchaseProvider>().setBuyState(BuyState.idle);
+              if (value.success == true) {
+                Navigator.pushReplacementNamed(
+                  context,
+                  SplashPage.routeName,
+                );
+              }
+              ToastWidgets.responseToast(context, value);
+            },
+          );
           // bool valid = await _verifyPurchase(purchaseDetails);
           // if (valid) {
           //   _deliverProduct(purchaseDetails);
@@ -106,93 +118,141 @@ class _DersligProPageState extends State<DersligProPage> {
       body: SizedBox(
         height: double.infinity,
         width: double.infinity,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                height: deviceTopPadding(context),
-              ),
-              Padding(
-                padding: EdgeInsets.all(deviceWidthSize(context, 20)),
-                child: Text(
-                  "Derslig Pro ile Başarını Yükselt!",
-                  textAlign: TextAlign.center,
-                  style: AppTheme.blackTextStyle(context, 30,
-                      color: AppTheme.black),
-                ),
-              ),
-              ...List.generate(
-                _products.length,
-                (index) => Container(
-                    margin: EdgeInsets.symmetric(
-                      horizontal: deviceWidthSize(context, 20),
-                      vertical: deviceHeightSize(context, 5),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    height: deviceTopPadding(context),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(deviceWidthSize(context, 20)),
+                    child: Text(
+                      "Derslig Pro ile Başarını Yükselt!",
+                      textAlign: TextAlign.center,
+                      style: AppTheme.blackTextStyle(context, 30,
+                          color: AppTheme.black),
                     ),
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppTheme.grey.withOpacity(0.3)),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: AppTheme.shadowList,
-                      color: AppTheme.white,
-                    ),
-                    padding: EdgeInsets.all(deviceWidthSize(context, 16)),
-                    child: Column(
-                      children: [
-                        Text(
-                          _products[index].title,
-                          style: AppTheme.boldTextStyle(context, 16,
-                              color: AppTheme.grey),
-                        ),
-                        SizedBox(
-                          height: deviceHeightSize(context, 20),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              _products[index].price,
-                              style: AppTheme.blackTextStyle(context, 32,
-                                  color: AppTheme.blue),
-                            ),
-                            // Text(
-                            //   " / ",
-                            //   style: AppTheme.boldTextStyle(context, 20,
-                            //       color: AppTheme.grey),
-                            // ),
-                            // Text(
-                            //   _products[index].duration,
-                            //   style: AppTheme.boldTextStyle(context, 20,
-                            //       color: AppTheme.blue),
-                            // ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: deviceHeightSize(context, 10),
-                        ),
-                        MaterialButton(
-                          onPressed: () async {
-                            buyProduct();
-                          },
-                          color: AppTheme.pink,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: deviceWidthSize(context, 30),
-                            vertical: deviceHeightSize(context, 8),
-                          ),
-                          child: Text(
-                            "Satın Al",
+                  ),
+                  ...List.generate(
+                    _products.length,
+                    (index) => Container(
+                      margin: EdgeInsets.symmetric(
+                        horizontal: deviceWidthSize(context, 20),
+                        vertical: deviceHeightSize(context, 5),
+                      ),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        border:
+                            Border.all(color: AppTheme.grey.withOpacity(0.3)),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: AppTheme.shadowList,
+                        color: AppTheme.white,
+                      ),
+                      padding: EdgeInsets.all(deviceWidthSize(context, 16)),
+                      child: Column(
+                        children: [
+                          Text(
+                            _products[index].title,
                             style: AppTheme.boldTextStyle(context, 16,
-                                color: AppTheme.white),
+                                color: AppTheme.grey),
                           ),
-                        ),
-                      ],
-                    )),
+                          SizedBox(
+                            height: deviceHeightSize(context, 20),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _products[index].price,
+                                style: AppTheme.blackTextStyle(context, 32,
+                                    color: AppTheme.blue),
+                              ),
+                              // Text(
+                              //   " / ",
+                              //   style: AppTheme.boldTextStyle(context, 20,
+                              //       color: AppTheme.grey),
+                              // ),
+                              // Text(
+                              //   _products[index].duration,
+                              //   style: AppTheme.boldTextStyle(context, 20,
+                              //       color: AppTheme.blue),
+                              // ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: deviceHeightSize(context, 10),
+                          ),
+                          MaterialButton(
+                            onPressed: () async {
+                              context
+                                  .read<PurchaseProvider>()
+                                  .setBuyState(BuyState.busy);
+                              context
+                                  .read<PurchaseProvider>()
+                                  .checkUser(
+                                      xsrfToken: HiveHelpers.getLoginModel()!
+                                          .xsrfToken,
+                                      dersligCookie:
+                                          HiveHelpers.getLoginModel()!
+                                              .dersligCookie)
+                                  .then((value) {
+                                if (value.success == true) {
+                                  context
+                                      .read<PurchaseProvider>()
+                                      .selectedPollenIndex = index;
+                                  buyProduct();
+                                } else {
+                                  ToastWidgets.errorToast(
+                                      context, value.message);
+                                }
+                                context
+                                    .read<PurchaseProvider>()
+                                    .setBuyState(BuyState.idle);
+                              });
+                            },
+                            color: AppTheme.pink,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: deviceWidthSize(context, 30),
+                              vertical: deviceHeightSize(context, 8),
+                            ),
+                            child: Text(
+                              "Satın Al",
+                              style: AppTheme.boldTextStyle(context, 16,
+                                  color: AppTheme.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            Positioned.fill(
+              child: Consumer<PurchaseProvider>(
+                builder: (context, value, child) {
+                  if (value.buyState == BuyState.busy) {
+                    return Container(
+                      color: Colors.black.withOpacity(0.5),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.pink,
+                        ),
+                      ),
+                    );
+                  } else {
+                    return const SizedBox();
+                  }
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

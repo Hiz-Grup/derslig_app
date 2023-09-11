@@ -1,7 +1,7 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:derslig/constants/app_theme.dart';
+import 'package:derslig/constants/size.dart';
 import 'package:derslig/helper/hive_helpers.dart';
 import 'package:derslig/helper/url_launcher_helper.dart';
 import 'package:derslig/models/general_response_model.dart';
@@ -38,30 +38,27 @@ class _SplashPageState extends State<SplashPage> {
         );
       }
     });
-    Future.delayed(const Duration(seconds: 2)).then(
-      (_) => SchedulerBinding.instance.addPostFrameCallback(
-        (_) async {
-          GeneralResponseModel versionResponse =
-              await context.read<LoginRegisterPageProvider>().controlVersion();
-          if (versionResponse.success == false) {
-            _showForceUpdateDialog();
-          } else {
-            context
-                .read<PurchaseProvider>()
-                .initPlatformState()
-                .then((value) async {
-              if (HiveHelpers.getOnboardingStatus() == true) {
-                await context.read<LoginRegisterPageProvider>().controlUser();
-                Navigator.pushReplacementNamed(context, HomePage.routeName);
-              } else {
-                HiveHelpers.saveOnboardingStatus();
-                Navigator.pushReplacementNamed(
-                    context, OnboardingPage.routeName);
-              }
-            });
-          }
-        },
-      ),
+    SchedulerBinding.instance.addPostFrameCallback(
+      (_) async {
+        GeneralResponseModel versionResponse =
+            await context.read<LoginRegisterPageProvider>().controlVersion();
+        if (versionResponse.success == false) {
+          _showForceUpdateDialog();
+        } else {
+          context
+              .read<PurchaseProvider>()
+              .initPlatformState()
+              .then((value) async {
+            if (HiveHelpers.getOnboardingStatus() == true) {
+              await context.read<LoginRegisterPageProvider>().controlUser();
+              Navigator.pushReplacementNamed(context, HomePage.routeName);
+            } else {
+              HiveHelpers.saveOnboardingStatus();
+              Navigator.pushReplacementNamed(context, OnboardingPage.routeName);
+            }
+          });
+        }
+      },
     );
 
     //TARAYICI ÜZERİNDEN ÇIKIŞ YAPINCA KOMPLE ÇIK
@@ -71,9 +68,12 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: CircularProgressIndicator(),
+        child: Image.asset(
+          "assets/images/derslig-logo.png",
+          width: deviceWidthSize(context, 200),
+        ),
       ),
     );
   }

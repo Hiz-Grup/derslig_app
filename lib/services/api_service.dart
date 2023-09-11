@@ -59,6 +59,12 @@ class ApiService {
     );
 
     print("URL : " + url);
+    print("HEADERS : " +
+        {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          if (headers != null) ...headers,
+        }.toString());
     print("BODY : " + body.toString());
     print("RESPONSE : " + response.body);
     return response;

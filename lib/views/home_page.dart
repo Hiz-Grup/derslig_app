@@ -40,9 +40,9 @@ class _HomePageState extends State<HomePage> {
           url: "https://www.derslig.com/profilim",
         ),
       ),
-      if (context.watch<LoginRegisterPageProvider>().userModel == null ||
-          context.watch<LoginRegisterPageProvider>().userModel?.isPremium !=
-              true)
+      if ((context.watch<LoginRegisterPageProvider>().userModel?.isPremium !=
+              1 &&
+          context.watch<LoginRegisterPageProvider>().userModel?.type != 1))
         PageModel(
           title: "Derslig Pro",
           icon: const Icon(Icons.workspace_premium_rounded),
@@ -59,7 +59,8 @@ class _HomePageState extends State<HomePage> {
       ),
     ];
     return Scaffold(
-      bottomNavigationBar: context.watch<LoginRegisterPageProvider>().isLogin
+      bottomNavigationBar: context.watch<LoginRegisterPageProvider>().isLogin &&
+              deviceHeight(context) > 500
           ? bottomNavigation()
           : null,
       body: IndexedStack(

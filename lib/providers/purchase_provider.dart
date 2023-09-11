@@ -109,4 +109,14 @@ class PurchaseProvider with ChangeNotifier {
       dersligCookie: dersligCookie,
     );
   }
+
+  Future<GeneralResponseModel> checkUser({
+    required String xsrfToken,
+    required String dersligCookie,
+  }) async {
+    return await _purchaseController.checkUser(
+      xsrfToken: xsrfToken,
+      dersligCookie: dersligCookie,
+    );
+  }
 }

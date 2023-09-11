@@ -14,7 +14,7 @@ class UserModel {
       this.surname,
       this.email,
       this.phone,
-      this.isPremium});
+      this.isPremium = 0});
 
   UserModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];

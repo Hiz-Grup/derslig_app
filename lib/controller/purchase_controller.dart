@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:derslig/helper/locator.dart';
 import 'package:derslig/models/general_response_model.dart';
 import 'package:derslig/services/api_service.dart';
@@ -9,21 +11,20 @@ class PurchaseController {
     required String xsrfToken,
     required String dersligCookie,
   }) async {
-    GeneralResponseModel userCheck = await checkUser(
-      xsrfToken: xsrfToken,
-      dersligCookie: dersligCookie,
-    );
-    if (userCheck.success == false) {
-      return userCheck;
-    }
-
     try {
       final response = await _apiService.postRequest(
         "https://www.derslig.com/api/payment/confirm",
         {
-          "index": index.toString(),
-          "XSRF-TOKEN": xsrfToken,
-          "derslig-cookie": dersligCookie,
+          "productId": (index + 1).toString(),
+          // "XSRF-TOKEN": xsrfToken,
+          // "derslig-cookie": dersligCookie,
+        },
+        headers: {
+          "Cookie": "XSRF-TOKEN=" +
+              xsrfToken +
+              "; derslig_cookie=" +
+              dersligCookie +
+              ";",
         },
       );
 
@@ -34,7 +35,7 @@ class PurchaseController {
         );
       } else {
         return GeneralResponseModel(
-          message: "Bir hata oluştu",
+          message: json.decode(response.body)["error"],
           success: false,
         );
       }
@@ -51,9 +52,13 @@ class PurchaseController {
     try {
       final response = await _apiService.postRequest(
         "https://www.derslig.com/api/payment/check",
-        {
-          "XSRF-TOKEN": xsrfToken,
-          "derslig-cookie": dersligCookie,
+        {},
+        headers: {
+          "Cookie": "XSRF-TOKEN=" +
+              xsrfToken +
+              "; derslig_cookie=" +
+              dersligCookie +
+              ";",
         },
       );
 
