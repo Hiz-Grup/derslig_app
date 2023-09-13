@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
@@ -36,8 +37,7 @@ class _WebViewPageState extends State<WebViewPage> {
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
       params = WebKitWebViewControllerCreationParams(
-        allowsInlineMediaPlayback: false,
-        
+        allowsInlineMediaPlayback: true,
       );
     } else {
       params = const PlatformWebViewControllerCreationParams();
@@ -48,6 +48,7 @@ class _WebViewPageState extends State<WebViewPage> {
         name: "derslig_webview", value: "1", domain: "derslig.com"));
     cookies.add(const WebViewCookie(
         name: "cookieBarOK", value: "1", domain: "derslig.com"));
+
     controller = WebViewController.fromPlatformCreationParams(params)
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
@@ -120,18 +121,22 @@ class _WebViewPageState extends State<WebViewPage> {
       )
       ..loadRequest(
         Uri.parse(widget.url),
-        headers: {
-          "Cookie": cookies.map((e) => "${e.name}=${e.value}").join("; "),
-        },
       );
 
-    controller.enableZoom(false);
+    List<Cookie> cookieList = cookies
+        .map((e) => Cookie(
+              e.name,
+              e.value,
+            )
+              ..expires = DateTime.now().add(const Duration(days: 365 * 5))
+              ..httpOnly = false)
+        .toList();
+    cookieManager.setCookies(
+      cookieList,
+      origin: 'https://.derslig.com',
+    );
 
-    //get cooikes
-    controller.runJavaScriptReturningResult("document.cookie").then((value) {
-      print("document.cookie: $value");
-    });
-    // });
+    controller.enableZoom(false);
 
     super.initState();
   }
@@ -140,6 +145,7 @@ class _WebViewPageState extends State<WebViewPage> {
   @override
   Widget build(BuildContext context) {
     LoginResponseModel? loginResponseModel = HiveHelpers.getLoginModel();
+
     if (loginResponseModel == null) {
       HiveHelpers.saveUserStatus(false);
       // Navigator.pushNamedAndRemoveUntil(
@@ -167,14 +173,32 @@ class _WebViewPageState extends State<WebViewPage> {
       cookies.add(const WebViewCookie(
           name: "cookieBarOK", value: "1", domain: "derslig.com"));
 
-      controller.loadRequest(
-        Uri.parse(widget.url),
-        headers: {
-          "Cookie": cookies.map((e) => "${e.name}=${e.value}").join("; "),
-        },
+      // controller.loadRequest(
+      //   Uri.parse(widget.url),
+      //   headers: {
+      //     "Cookie": cookies.map((e) => "${e.name}=${e.value}").join("; "),
+      //   },
+      // );
+      List<Cookie> cookieList = cookies
+          .map((e) => Cookie(
+                e.name,
+                e.value,
+              )
+                ..expires = DateTime.now().add(const Duration(days: 365 * 5))
+                ..httpOnly = false)
+          .toList();
+      cookieManager.setCookies(
+        cookieList,
+        origin: 'https://.derslig.com',
       );
       isWork = true;
     }
+    cookieManager.getCookies('https://derslig.com').then((value) {
+      log("document.cookie:");
+      value.forEach((element) {
+        print("element: $element");
+      });
+    });
 
     if (context.read<LoginRegisterPageProvider>().loginRoute == true &&
         url == "https://www.derslig.com/ogrenci") {

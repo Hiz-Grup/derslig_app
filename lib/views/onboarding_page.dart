@@ -133,9 +133,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        currentIndex != pages.length - 1
-                            ? "Devam Et"
-                            : "Kayıt Ol",
+                        "Devam Et",
                         style: AppTheme.semiBoldTextStyle(context, 24).copyWith(
                           height: 1.5,
                         ),
