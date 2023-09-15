@@ -5,9 +5,11 @@ import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
 import 'package:derslig/helper/hive_helpers.dart';
 import 'package:derslig/models/login_response_model.dart';
+import 'package:derslig/models/page_model.dart';
 import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:derslig/providers/page_provider.dart';
 import 'package:derslig/views/back_button_widget.dart';
+import 'package:derslig/views/derslig_pro_page.dart';
 import 'package:derslig/views/widgets/no_internet_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,6 +33,7 @@ class _WebViewPageState extends State<WebViewPage> {
   bool isWork = false;
 
   List<WebViewCookie> cookies = [];
+  List<PageModel> pages = [];
 
   @override
   void initState() {
@@ -99,7 +102,13 @@ class _WebViewPageState extends State<WebViewPage> {
             } else if (request.url == "https://www.derslig.com/pro" ||
                 request.url.contains("https://www.derslig.com/siparis")) {
               if (context.read<LoginRegisterPageProvider>().isLogin)
-                context.read<PageProvider>().currentIndex = 2;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DersligProPage(),
+                    fullscreenDialog: true,
+                  ),
+                );
               //dont navigate to url
               return NavigationDecision.prevent;
             } else if (request.url.contains("https://www.derslig.com/cikis")) {
@@ -194,10 +203,10 @@ class _WebViewPageState extends State<WebViewPage> {
       isWork = true;
     }
     cookieManager.getCookies('https://derslig.com').then((value) {
-      log("document.cookie:");
-      value.forEach((element) {
-        print("element: $element");
-      });
+      // log("document.cookie:");
+      // value.forEach((element) {
+      //   print("element: $element");
+      // });
     });
 
     if (context.read<LoginRegisterPageProvider>().loginRoute == true &&
@@ -219,8 +228,42 @@ class _WebViewPageState extends State<WebViewPage> {
       });
       context.read<LoginRegisterPageProvider>().loginRoute = false;
     }
+
+    pages = [
+      PageModel(
+        title: "Ana Sayfa",
+        icon: const Icon(Icons.home_rounded),
+        selectedIcon: const Icon(Icons.home_rounded),
+        url: "https://www.derslig.com/",
+      ),
+      PageModel(
+        title: "Profilim",
+        icon: const Icon(Icons.person_rounded),
+        selectedIcon: const Icon(Icons.person_rounded),
+        url: "https://www.derslig.com/profilim",
+      ),
+      if ((context.watch<LoginRegisterPageProvider>().userModel?.isPremium !=
+              1 &&
+          context.watch<LoginRegisterPageProvider>().userModel?.type != 1))
+        PageModel(
+          title: "Derslig Pro",
+          icon: const Icon(Icons.workspace_premium_rounded),
+          selectedIcon: const Icon(Icons.workspace_premium_rounded),
+          url: "https://www.derslig.com/",
+        ),
+      PageModel(
+        title: "Dersler",
+        icon: const Icon(Icons.menu_book_rounded),
+        selectedIcon: const Icon(Icons.menu_book_rounded),
+        url: "https://www.derslig.com/dersler",
+      ),
+    ];
     return Scaffold(
       backgroundColor: Colors.white,
+      bottomNavigationBar: context.watch<LoginRegisterPageProvider>().isLogin &&
+              deviceHeight(context) > 500
+          ? bottomNavigation()
+          : null,
       body: Stack(
         children: [
           Column(
@@ -259,6 +302,61 @@ class _WebViewPageState extends State<WebViewPage> {
           )
         ],
       ),
+    );
+  }
+
+  BottomNavigationBar bottomNavigation() {
+    return BottomNavigationBar(
+      onTap: (index) {
+        context.read<PageProvider>().currentIndex = index;
+        print("index: $index");
+        if (index != 2) {
+          context.read<PageProvider>().pageIndex = 0;
+          print("pages[index].url: ${pages[index].url}");
+          controller.loadRequest(
+            Uri.parse(pages[index].url),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const DersligProPage(),
+              fullscreenDialog: true,
+            ),
+          );
+          context.read<PageProvider>().pageIndex = 2;
+        }
+      },
+      type: BottomNavigationBarType.fixed,
+      //active colro of bottom navigation bar
+      selectedItemColor: AppTheme.pink,
+      currentIndex: context.watch<PageProvider>().currentIndex,
+      selectedLabelStyle: AppTheme.boldTextStyle(context, 16),
+      unselectedLabelStyle: AppTheme.normalTextStyle(context, 12),
+      iconSize: deviceFontSize(context, 30),
+      selectedIconTheme: IconThemeData(size: deviceFontSize(context, 32)),
+      unselectedItemColor: AppTheme.black.withOpacity(0.5),
+      items: pages
+          .map(
+            (e) => BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(
+                  top: deviceHeightSize(context, 10),
+                  bottom: deviceHeightSize(context, 1),
+                ),
+                child: e.icon,
+              ),
+              label: e.title,
+              activeIcon: Padding(
+                padding: EdgeInsets.only(
+                  top: deviceHeightSize(context, 10),
+                  bottom: deviceHeightSize(context, 5),
+                ),
+                child: e.selectedIcon,
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 }

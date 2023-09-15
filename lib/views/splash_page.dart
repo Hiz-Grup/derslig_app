@@ -7,8 +7,8 @@ import 'package:derslig/helper/url_launcher_helper.dart';
 import 'package:derslig/models/general_response_model.dart';
 import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:derslig/providers/purchase_provider.dart';
-import 'package:derslig/views/home_page.dart';
 import 'package:derslig/views/onboarding_page.dart';
+import 'package:derslig/views/web_view_page.dart';
 import 'package:derslig/views/widgets/dialog_widgets.dart';
 import 'package:derslig/views/widgets/no_internet_widget.dart';
 import 'package:flutter/material.dart';
@@ -51,7 +51,15 @@ class _SplashPageState extends State<SplashPage> {
               .then((value) async {
             if (HiveHelpers.getOnboardingStatus() == true) {
               await context.read<LoginRegisterPageProvider>().controlUser();
-              Navigator.pushReplacementNamed(context, HomePage.routeName);
+              // ignore: use_build_context_synchronously
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const WebViewPage(
+                    url: "https://derslig.com/giris",
+                  ),
+                ),
+              );
             } else {
               HiveHelpers.saveOnboardingStatus();
               Navigator.pushReplacementNamed(context, OnboardingPage.routeName);

@@ -4,12 +4,14 @@ class PageModel {
   final String title;
   final Widget icon;
   final Widget selectedIcon;
-  final Widget page;
+
+  final String url;
 
   PageModel({
     required this.title,
     required this.icon,
     required this.selectedIcon,
-    required this.page,
+
+    required this.url,
   });
 }

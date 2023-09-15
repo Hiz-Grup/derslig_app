@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
 import 'package:derslig/helper/hive_helpers.dart';
+import 'package:derslig/providers/page_provider.dart';
 import 'package:derslig/providers/purchase_provider.dart';
+import 'package:derslig/views/back_button_widget.dart';
 import 'package:derslig/views/splash_page.dart';
 import 'package:derslig/views/widgets/toast_widgets.dart';
 import 'package:flutter/material.dart';
@@ -126,6 +128,20 @@ class _DersligProPageState extends State<DersligProPage> {
                 children: [
                   SizedBox(
                     height: deviceTopPadding(context),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: deviceWidthSize(context, 20),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    child: BackButtonWidget(
+                      onPressed: () {
+                        context.read<PageProvider>().pageIndex = 0;
+                        context.read<PageProvider>().currentIndex = 0;
+
+                        Navigator.pop(context);
+                      },
+                    ),
                   ),
                   Padding(
                     padding: EdgeInsets.all(deviceWidthSize(context, 20)),
