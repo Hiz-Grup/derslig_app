@@ -99,6 +99,13 @@ class _WebViewPageState extends State<WebViewPage> {
             if (request.url.contains("https://www.derslig.com/profilim")) {
               context.read<PageProvider>().currentIndex = 1;
               return NavigationDecision.navigate;
+            } else if (request.url
+                .contains("https://www.derslig.com/dersler")) {
+              context.read<PageProvider>().currentIndex = pages.length - 1;
+              return NavigationDecision.navigate;
+            } else if (request.url == "https://www.derslig.com/ogrenci") {
+              context.read<PageProvider>().currentIndex = 0;
+              return NavigationDecision.navigate;
             } else if (request.url == "https://www.derslig.com/pro" ||
                 request.url.contains("https://www.derslig.com/siparis")) {
               if (context.read<LoginRegisterPageProvider>().isLogin)
@@ -117,8 +124,6 @@ class _WebViewPageState extends State<WebViewPage> {
               return NavigationDecision.navigate;
             } else if (request.url
                     .contains("https://www.derslig.com/kurumsal") ||
-                request.url.contains("https://www.derslig.com/blog") ||
-                request.url.contains("https://www.derslig.com/yardim") ||
                 request.url.contains("https://www.derslig.com/pro/lgs") ||
                 request.url.contains("https://www.derslig.com/pro/yks")) {
               return NavigationDecision.prevent;
