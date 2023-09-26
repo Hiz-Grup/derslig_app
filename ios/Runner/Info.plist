@@ -47,5 +47,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+    <key>NSCameraUsageDescription</key>
+    <string>Uygulama kameranızı kullanarak fotoğraf çekmeyi istiyor.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Uygulama fotoğraflarınıza erişmeyi istiyor.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Uygulama mikrofonunuzu kullanarak ses kaydetmeyi istiyor.</string>
 </dict>
 </plist>

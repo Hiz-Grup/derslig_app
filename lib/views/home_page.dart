@@ -1,10 +1,5 @@
-import 'package:derslig/models/page_model.dart';
-import 'package:derslig/providers/login_register_page_provider.dart';
-import 'package:derslig/providers/page_provider.dart';
-import 'package:derslig/views/derslig_pro_page.dart';
-import 'package:derslig/views/web_view_page.dart';
+
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

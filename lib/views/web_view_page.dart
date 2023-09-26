@@ -315,7 +315,7 @@ class _WebViewPageState extends State<WebViewPage> {
       onTap: (index) {
         context.read<PageProvider>().currentIndex = index;
         print("index: $index");
-        if (index != 2) {
+        if (pages[index].title != "Derslig Pro") {
           context.read<PageProvider>().pageIndex = 0;
           print("pages[index].url: ${pages[index].url}");
           controller.loadRequest(
