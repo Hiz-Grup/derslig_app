@@ -11,6 +11,55 @@ PODS:
   - in_app_purchase_storekit (0.0.1):
     - Flutter
     - FlutterMacOS
+  - onesignal_flutter (5.2.4):
+    - Flutter
+    - OneSignalXCFramework (= 5.2.3)
+  - OneSignalXCFramework (5.2.3):
+    - OneSignalXCFramework/OneSignalComplete (= 5.2.3)
+  - OneSignalXCFramework/OneSignal (5.2.3):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalExtension
+    - OneSignalXCFramework/OneSignalLiveActivities
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalOutcomes
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalComplete (5.2.3):
+    - OneSignalXCFramework/OneSignal
+    - OneSignalXCFramework/OneSignalInAppMessages
+    - OneSignalXCFramework/OneSignalLocation
+  - OneSignalXCFramework/OneSignalCore (5.2.3)
+  - OneSignalXCFramework/OneSignalExtension (5.2.3):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalOutcomes
+  - OneSignalXCFramework/OneSignalInAppMessages (5.2.3):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalOutcomes
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalLiveActivities (5.2.3):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalLocation (5.2.3):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalNotifications (5.2.3):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalExtension
+    - OneSignalXCFramework/OneSignalOutcomes
+  - OneSignalXCFramework/OneSignalOSCore (5.2.3):
+    - OneSignalXCFramework/OneSignalCore
+  - OneSignalXCFramework/OneSignalOutcomes (5.2.3):
+    - OneSignalXCFramework/OneSignalCore
+  - OneSignalXCFramework/OneSignalUser (5.2.3):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalOutcomes
   - package_info_plus (0.4.5):
     - Flutter
   - path_provider_foundation (0.0.1):
@@ -37,6 +86,8 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
   - in_app_purchase_storekit (from `.symlinks/plugins/in_app_purchase_storekit/darwin`)
+  - onesignal_flutter (from `.symlinks/plugins/onesignal_flutter/ios`)
+  - OneSignalXCFramework (< 6.0, >= 5.0.0)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - purchases_flutter (from `.symlinks/plugins/purchases_flutter/ios`)
@@ -46,6 +97,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - OneSignalXCFramework
     - PurchasesHybridCommon
     - ReachabilitySwift
     - RevenueCat
@@ -62,6 +114,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/fluttertoast/ios"
   in_app_purchase_storekit:
     :path: ".symlinks/plugins/in_app_purchase_storekit/darwin"
+  onesignal_flutter:
+    :path: ".symlinks/plugins/onesignal_flutter/ios"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   path_provider_foundation:
@@ -78,9 +132,11 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   app_tracking_transparency: 5b1745ef9ade815f7455cb6a0848349589afb7c5
   connectivity_plus: 07c49e96d7fc92bc9920617b83238c4d178b446a
-  Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
-  fluttertoast: fafc4fa4d01a6a9e4f772ecd190ffa525e9e2d9c
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  fluttertoast: 31b00dabfa7fb7bacd9e7dbee580d7a2ff4bf265
   in_app_purchase_storekit: 4fb7ee9e824b1f09107fbfbbce8c4b276366dc43
+  onesignal_flutter: 3d348a51e0c42e112e559a5c9871e2aada3deb7a
+  OneSignalXCFramework: 356e59953e157f6e45a7fdfc863073b3168b2d01
   package_info_plus: fd030dabf36271f146f1f3beacd48f564b0f17f7
   path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
   purchases_flutter: 7a2d395cd77aa08f5911188726ba638000529cfb
@@ -92,6 +148,6 @@ SPEC CHECKSUMS:
   webview_cookie_manager: eaf920722b493bd0f7611b5484771ca53fed03f7
   webview_flutter_wkwebview: 2e2d318f21a5e036e2c3f26171342e95908bd60a
 
-PODFILE CHECKSUM: ef19549a9bc3046e7bb7d2fab4d021637c0c58a3
+PODFILE CHECKSUM: fb11b338106aadf1534a59d16fd2780f4bb521f3
 
-COCOAPODS: 1.12.1
+COCOAPODS: 1.14.2

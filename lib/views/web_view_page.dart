@@ -14,6 +14,7 @@ import 'package:derslig/views/widgets/no_internet_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_cookie_manager/webview_cookie_manager.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -37,6 +38,18 @@ class _WebViewPageState extends State<WebViewPage> {
 
   @override
   void initState() {
+    //SECTION - OneSignal
+    if (context.read<LoginRegisterPageProvider>().isLogin) {
+      bool isPro =
+          context.read<LoginRegisterPageProvider>().userModel?.isPremium == 1;
+      int userType =
+          context.read<LoginRegisterPageProvider>().userModel?.type ?? 0;
+      OneSignal.login(
+          context.read<LoginRegisterPageProvider>().userModel!.id.toString());
+      OneSignal.User.addTagWithKey("isPro", isPro.toString());
+      OneSignal.User.addTagWithKey("isPro", userType.toString());
+    }
+    //SECTION - WebView
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
       params = WebKitWebViewControllerCreationParams(
@@ -96,6 +109,24 @@ class _WebViewPageState extends State<WebViewPage> {
               context.read<LoginRegisterPageProvider>().loginRoute = true;
             }
 
+            if (context.read<LoginRegisterPageProvider>().isLogin) {
+              bool isPro = context
+                      .read<LoginRegisterPageProvider>()
+                      .userModel
+                      ?.isPremium ==
+                  1;
+              int userType =
+                  context.read<LoginRegisterPageProvider>().userModel?.type ??
+                      0;
+              OneSignal.login(context
+                  .read<LoginRegisterPageProvider>()
+                  .userModel!
+                  .id
+                  .toString());
+              OneSignal.User.addTagWithKey("isPro", isPro.toString());
+              OneSignal.User.addTagWithKey("userType", userType.toString());
+            }
+
             if (request.url.contains("https://www.derslig.com/profilim")) {
               context.read<PageProvider>().currentIndex = 1;
               return NavigationDecision.navigate;
@@ -120,7 +151,7 @@ class _WebViewPageState extends State<WebViewPage> {
               return NavigationDecision.prevent;
             } else if (request.url.contains("https://www.derslig.com/cikis")) {
               HiveHelpers.logout(context);
-
+              OneSignal.logout();
               return NavigationDecision.navigate;
             } else if (request.url
                     .contains("https://www.derslig.com/kurumsal") ||

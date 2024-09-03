@@ -51,6 +51,7 @@ dependencies:
   connectivity_plus: ^4.0.2
   app_tracking_transparency: ^2.0.4
   webview_flutter_wkwebview: ^3.7.4
+  onesignal_flutter: ^5.2.4
 
 dev_dependencies:
   flutter_test:

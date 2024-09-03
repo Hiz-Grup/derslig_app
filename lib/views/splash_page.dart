@@ -14,6 +14,7 @@ import 'package:derslig/views/widgets/no_internet_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 
 class SplashPage extends StatefulWidget {
@@ -38,6 +39,9 @@ class _SplashPageState extends State<SplashPage> {
         );
       }
     });
+
+    OneSignal.initialize("9a0b6b0b-e1b8-41de-b071-2feae869602c");
+
     SchedulerBinding.instance.addPostFrameCallback(
       (_) async {
         GeneralResponseModel versionResponse =

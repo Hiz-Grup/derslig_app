@@ -61,17 +61,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               horizontal: deviceWidthSize(context, 20)),
                           child: Column(
                             children: [
-                              const Spacer(),
                               SvgPicture.asset(
                                 "assets/images/derslig-logo.svg",
                                 width: deviceWidthSize(context, 150),
                                 color: AppTheme.pink,
                               ),
-                              const Spacer(),
-                              Image.asset(
-                                pages[index].image,
-                                height: deviceHeightSize(context, 300),
-                                width: deviceWidthSize(context, 300),
+                              Expanded(
+                                child: Image.asset(
+                                  pages[index].image,
+                                  height: deviceHeightSize(context, 300),
+                                  width: deviceWidthSize(context, 300),
+                                ),
                               ),
                               SizedBox(height: deviceHeightSize(context, 20)),
                               Text(
@@ -84,9 +84,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 pages[index].description,
                                 textAlign: TextAlign.center,
                                 style: AppTheme.lightTextStyle(context, 20),
-                              ),
-                              const Spacer(
-                                flex: 6,
                               ),
                               SizedBox(height: deviceHeightSize(context, 20)),
                             ],
