@@ -11,12 +11,12 @@ PODS:
   - in_app_purchase_storekit (0.0.1):
     - Flutter
     - FlutterMacOS
-  - onesignal_flutter (5.2.4):
+  - onesignal_flutter (5.2.6):
     - Flutter
-    - OneSignalXCFramework (= 5.2.3)
-  - OneSignalXCFramework (5.2.3):
-    - OneSignalXCFramework/OneSignalComplete (= 5.2.3)
-  - OneSignalXCFramework/OneSignal (5.2.3):
+    - OneSignalXCFramework (= 5.2.5)
+  - OneSignalXCFramework (5.2.5):
+    - OneSignalXCFramework/OneSignalComplete (= 5.2.5)
+  - OneSignalXCFramework/OneSignal (5.2.5):
     - OneSignalXCFramework/OneSignalCore
     - OneSignalXCFramework/OneSignalExtension
     - OneSignalXCFramework/OneSignalLiveActivities
@@ -24,38 +24,38 @@ PODS:
     - OneSignalXCFramework/OneSignalOSCore
     - OneSignalXCFramework/OneSignalOutcomes
     - OneSignalXCFramework/OneSignalUser
-  - OneSignalXCFramework/OneSignalComplete (5.2.3):
+  - OneSignalXCFramework/OneSignalComplete (5.2.5):
     - OneSignalXCFramework/OneSignal
     - OneSignalXCFramework/OneSignalInAppMessages
     - OneSignalXCFramework/OneSignalLocation
-  - OneSignalXCFramework/OneSignalCore (5.2.3)
-  - OneSignalXCFramework/OneSignalExtension (5.2.3):
+  - OneSignalXCFramework/OneSignalCore (5.2.5)
+  - OneSignalXCFramework/OneSignalExtension (5.2.5):
     - OneSignalXCFramework/OneSignalCore
     - OneSignalXCFramework/OneSignalOutcomes
-  - OneSignalXCFramework/OneSignalInAppMessages (5.2.3):
+  - OneSignalXCFramework/OneSignalInAppMessages (5.2.5):
     - OneSignalXCFramework/OneSignalCore
     - OneSignalXCFramework/OneSignalNotifications
     - OneSignalXCFramework/OneSignalOSCore
     - OneSignalXCFramework/OneSignalOutcomes
     - OneSignalXCFramework/OneSignalUser
-  - OneSignalXCFramework/OneSignalLiveActivities (5.2.3):
+  - OneSignalXCFramework/OneSignalLiveActivities (5.2.5):
     - OneSignalXCFramework/OneSignalCore
     - OneSignalXCFramework/OneSignalOSCore
     - OneSignalXCFramework/OneSignalUser
-  - OneSignalXCFramework/OneSignalLocation (5.2.3):
+  - OneSignalXCFramework/OneSignalLocation (5.2.5):
     - OneSignalXCFramework/OneSignalCore
     - OneSignalXCFramework/OneSignalNotifications
     - OneSignalXCFramework/OneSignalOSCore
     - OneSignalXCFramework/OneSignalUser
-  - OneSignalXCFramework/OneSignalNotifications (5.2.3):
+  - OneSignalXCFramework/OneSignalNotifications (5.2.5):
     - OneSignalXCFramework/OneSignalCore
     - OneSignalXCFramework/OneSignalExtension
     - OneSignalXCFramework/OneSignalOutcomes
-  - OneSignalXCFramework/OneSignalOSCore (5.2.3):
+  - OneSignalXCFramework/OneSignalOSCore (5.2.5):
     - OneSignalXCFramework/OneSignalCore
-  - OneSignalXCFramework/OneSignalOutcomes (5.2.3):
+  - OneSignalXCFramework/OneSignalOutcomes (5.2.5):
     - OneSignalXCFramework/OneSignalCore
-  - OneSignalXCFramework/OneSignalUser (5.2.3):
+  - OneSignalXCFramework/OneSignalUser (5.2.5):
     - OneSignalXCFramework/OneSignalCore
     - OneSignalXCFramework/OneSignalNotifications
     - OneSignalXCFramework/OneSignalOSCore
@@ -65,14 +65,14 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - purchases_flutter (5.4.0):
+  - purchases_flutter (5.8.2):
     - Flutter
-    - PurchasesHybridCommon (= 5.4.1)
-  - PurchasesHybridCommon (5.4.1):
-    - RevenueCat (= 4.25.1)
-  - ReachabilitySwift (5.0.0)
-  - RevenueCat (4.25.1)
-  - Toast (4.0.0)
+    - PurchasesHybridCommon (= 6.3.2)
+  - PurchasesHybridCommon (6.3.2):
+    - RevenueCat (= 4.26.1)
+  - ReachabilitySwift (5.2.4)
+  - RevenueCat (4.26.1)
+  - Toast (4.1.1)
   - url_launcher_ios (0.0.1):
     - Flutter
   - webview_cookie_manager (0.0.1):
@@ -135,19 +135,19 @@ SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   fluttertoast: 31b00dabfa7fb7bacd9e7dbee580d7a2ff4bf265
   in_app_purchase_storekit: 4fb7ee9e824b1f09107fbfbbce8c4b276366dc43
-  onesignal_flutter: 3d348a51e0c42e112e559a5c9871e2aada3deb7a
-  OneSignalXCFramework: 356e59953e157f6e45a7fdfc863073b3168b2d01
-  package_info_plus: fd030dabf36271f146f1f3beacd48f564b0f17f7
+  onesignal_flutter: f441aaefa112988a1e786c695a30695ad0291763
+  OneSignalXCFramework: 76ca508fc2b941317729d13fdec96817f8ef5b3b
+  package_info_plus: 115f4ad11e0698c8c1c5d8a689390df880f47e85
   path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
-  purchases_flutter: 7a2d395cd77aa08f5911188726ba638000529cfb
-  PurchasesHybridCommon: 594ee4895ed02a7791391d2b40c0ece08103ad80
-  ReachabilitySwift: 985039c6f7b23a1da463388634119492ff86c825
-  RevenueCat: cc588605c9852000693d8b94b7c2e79894ae9117
-  Toast: 91b396c56ee72a5790816f40d3a94dd357abc196
+  purchases_flutter: 32697fa7b2aceb2af2dde25826c5f8b74021fcd1
+  PurchasesHybridCommon: 98af59169dd9c418eac0725c43f02db92a643b79
+  ReachabilitySwift: 32793e867593cfc1177f5d16491e3a197d2fccda
+  RevenueCat: 4e8899a69fd57180ef166237d1eb670023be05de
+  Toast: 1f5ea13423a1e6674c4abdac5be53587ae481c4e
   url_launcher_ios: 08a3dfac5fb39e8759aeb0abbd5d9480f30fc8b4
   webview_cookie_manager: eaf920722b493bd0f7611b5484771ca53fed03f7
   webview_flutter_wkwebview: 2e2d318f21a5e036e2c3f26171342e95908bd60a
 
-PODFILE CHECKSUM: fb11b338106aadf1534a59d16fd2780f4bb521f3
+PODFILE CHECKSUM: 4aed11c6da77d68fb57924bf5dda0caa2d6d391e
 
 COCOAPODS: 1.14.2

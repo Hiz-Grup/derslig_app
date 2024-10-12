@@ -6,6 +6,7 @@ import 'package:derslig/constants/size.dart';
 import 'package:derslig/helper/hive_helpers.dart';
 import 'package:derslig/models/login_response_model.dart';
 import 'package:derslig/models/page_model.dart';
+import 'package:derslig/models/user_model.dart';
 import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:derslig/providers/page_provider.dart';
 import 'package:derslig/views/back_button_widget.dart';
@@ -38,17 +39,8 @@ class _WebViewPageState extends State<WebViewPage> {
 
   @override
   void initState() {
-    //SECTION - OneSignal
-    if (context.read<LoginRegisterPageProvider>().isLogin) {
-      bool isPro =
-          context.read<LoginRegisterPageProvider>().userModel?.isPremium == 1;
-      int userType =
-          context.read<LoginRegisterPageProvider>().userModel?.type ?? 0;
-      OneSignal.login(
-          context.read<LoginRegisterPageProvider>().userModel!.id.toString());
-      OneSignal.User.addTagWithKey("isPro", isPro.toString());
-      OneSignal.User.addTagWithKey("isPro", userType.toString());
-    }
+    // //SECTION - OneSignal
+    // oneSignalTags();
     //SECTION - WebView
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
@@ -65,108 +57,7 @@ class _WebViewPageState extends State<WebViewPage> {
     cookies.add(const WebViewCookie(
         name: "cookieBarOK", value: "1", domain: "derslig.com"));
 
-    controller = WebViewController.fromPlatformCreationParams(params)
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000))
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onProgress: (int progress) {
-            // Update loading bar.
-          },
-          onPageStarted: (String url) {
-            // print("onPageStarted: $url");
-          },
-          onPageFinished: (String url) {
-            // print("onPageFinished: $url");
-          },
-          onWebResourceError: (WebResourceError error) async {
-            // Handle error.
-            print("error: ${error.description}");
-          },
-          onNavigationRequest: (NavigationRequest request) async {
-            print("request.url: ${request.url}");
-
-            InternetConnectionChecker().hasConnection.then((isDeviceConnected) {
-              if (isDeviceConnected == false) {
-                Future.delayed(const Duration(seconds: 1)).then(
-                  (value) => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      fullscreenDialog: true,
-                      builder: (context) => const NoInternetWidget(),
-                    ),
-                  ),
-                );
-              }
-            });
-
-            setState(() {
-              url = request.url;
-            });
-
-            if (request.url.contains("?user_signed_in") ||
-                request.url.contains("?user_signed_up")) {
-              context.read<LoginRegisterPageProvider>().loginRoute = true;
-            }
-
-            if (context.read<LoginRegisterPageProvider>().isLogin) {
-              bool isPro = context
-                      .read<LoginRegisterPageProvider>()
-                      .userModel
-                      ?.isPremium ==
-                  1;
-              int userType =
-                  context.read<LoginRegisterPageProvider>().userModel?.type ??
-                      0;
-              OneSignal.login(context
-                  .read<LoginRegisterPageProvider>()
-                  .userModel!
-                  .id
-                  .toString());
-              OneSignal.User.addTagWithKey("isPro", isPro.toString());
-              OneSignal.User.addTagWithKey("userType", userType.toString());
-            }
-
-            if (request.url.contains("https://www.derslig.com/profilim")) {
-              context.read<PageProvider>().currentIndex = 1;
-              return NavigationDecision.navigate;
-            } else if (request.url
-                .contains("https://www.derslig.com/dersler")) {
-              context.read<PageProvider>().currentIndex = pages.length - 1;
-              return NavigationDecision.navigate;
-            } else if (request.url == "https://www.derslig.com/ogrenci") {
-              context.read<PageProvider>().currentIndex = 0;
-              return NavigationDecision.navigate;
-            } else if (request.url == "https://www.derslig.com/pro" ||
-                request.url.contains("https://www.derslig.com/siparis")) {
-              if (context.read<LoginRegisterPageProvider>().isLogin)
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const DersligProPage(),
-                    fullscreenDialog: true,
-                  ),
-                );
-              //dont navigate to url
-              return NavigationDecision.prevent;
-            } else if (request.url.contains("https://www.derslig.com/cikis")) {
-              HiveHelpers.logout(context);
-              OneSignal.logout();
-              return NavigationDecision.navigate;
-            } else if (request.url
-                    .contains("https://www.derslig.com/kurumsal") ||
-                request.url.contains("https://www.derslig.com/pro/lgs") ||
-                request.url.contains("https://www.derslig.com/pro/yks")) {
-              return NavigationDecision.prevent;
-            } else {
-              return NavigationDecision.navigate;
-            }
-          },
-        ),
-      )
-      ..loadRequest(
-        Uri.parse(widget.url),
-      );
+    setWebViewController(params);
 
     List<Cookie> cookieList = cookies
         .map((e) => Cookie(
@@ -238,17 +129,14 @@ class _WebViewPageState extends State<WebViewPage> {
       );
       isWork = true;
     }
-    cookieManager.getCookies('https://derslig.com').then((value) {
-      // log("document.cookie:");
-      // value.forEach((element) {
-      //   print("element: $element");
-      // });
-    });
+
+    // log("loginRoute: ${context.read<LoginRegisterPageProvider>().loginRoute}");
+    // log("url: $url");
 
     if (context.read<LoginRegisterPageProvider>().loginRoute == true &&
         url == "https://www.derslig.com/ogrenci") {
       cookieManager.getCookies('https://derslig.com').then((value) {
-        log("document.cookie: $value");
+        // log("document.cookie: $value");
         RegExp regExpXsrg = RegExp(r'XSRF-TOKEN=(.*?);');
         String xsrfToken = regExpXsrg.firstMatch(value.toString())!.group(1)!;
         RegExp regExpDersligCookie = RegExp(r'derslig_cookie=(.*?);');
@@ -260,40 +148,16 @@ class _WebViewPageState extends State<WebViewPage> {
           expireDate: DateTime.now().add(const Duration(days: 60)),
         );
         HiveHelpers.saveLoginModel(loginResponseModel);
-        context.read<LoginRegisterPageProvider>().controlUser();
+        context.read<LoginRegisterPageProvider>().controlUser().then(
+          (value) {
+            oneSignalTags();
+          },
+        );
       });
       context.read<LoginRegisterPageProvider>().loginRoute = false;
     }
 
-    pages = [
-      PageModel(
-        title: "Ana Sayfa",
-        icon: const Icon(Icons.home_rounded),
-        selectedIcon: const Icon(Icons.home_rounded),
-        url: "https://www.derslig.com/",
-      ),
-      PageModel(
-        title: "Profilim",
-        icon: const Icon(Icons.person_rounded),
-        selectedIcon: const Icon(Icons.person_rounded),
-        url: "https://www.derslig.com/profilim",
-      ),
-      if ((context.watch<LoginRegisterPageProvider>().userModel?.isPremium !=
-              1 &&
-          context.watch<LoginRegisterPageProvider>().userModel?.type != 1))
-        PageModel(
-          title: "Derslig Pro",
-          icon: const Icon(Icons.workspace_premium_rounded),
-          selectedIcon: const Icon(Icons.workspace_premium_rounded),
-          url: "https://www.derslig.com/",
-        ),
-      PageModel(
-        title: "Dersler",
-        icon: const Icon(Icons.menu_book_rounded),
-        selectedIcon: const Icon(Icons.menu_book_rounded),
-        url: "https://www.derslig.com/dersler",
-      ),
-    ];
+    setPages(context);
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: context.watch<LoginRegisterPageProvider>().isLogin &&
@@ -341,12 +205,44 @@ class _WebViewPageState extends State<WebViewPage> {
     );
   }
 
+  void setPages(BuildContext context) {
+    pages = [
+      PageModel(
+        title: "Ana Sayfa",
+        icon: const Icon(Icons.home_rounded),
+        selectedIcon: const Icon(Icons.home_rounded),
+        url: "https://www.derslig.com/",
+      ),
+      PageModel(
+        title: "Profilim",
+        icon: const Icon(Icons.person_rounded),
+        selectedIcon: const Icon(Icons.person_rounded),
+        url: "https://www.derslig.com/profilim",
+      ),
+      if ((context.watch<LoginRegisterPageProvider>().userModel?.isPremium !=
+              1 &&
+          context.watch<LoginRegisterPageProvider>().userModel?.type != 1))
+        PageModel(
+          title: "Derslig Pro",
+          icon: const Icon(Icons.workspace_premium_rounded),
+          selectedIcon: const Icon(Icons.workspace_premium_rounded),
+          url: "https://www.derslig.com/",
+        ),
+      PageModel(
+        title: "Dersler",
+        icon: const Icon(Icons.menu_book_rounded),
+        selectedIcon: const Icon(Icons.menu_book_rounded),
+        url: "https://www.derslig.com/dersler",
+      ),
+    ];
+  }
+
   BottomNavigationBar bottomNavigation() {
     return BottomNavigationBar(
       onTap: (index) {
         context.read<PageProvider>().currentIndex = index;
         print("index: $index");
-        if (pages[index].title != "Derslig Pro") {
+        if (pages[index].title != "Derslig Pro" || Platform.isAndroid) {
           context.read<PageProvider>().pageIndex = 0;
           print("pages[index].url: ${pages[index].url}");
           controller.loadRequest(
@@ -394,5 +290,127 @@ class _WebViewPageState extends State<WebViewPage> {
           )
           .toList(),
     );
+  }
+
+  void setWebViewController(PlatformWebViewControllerCreationParams params) {
+    controller = WebViewController.fromPlatformCreationParams(params)
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            // Update loading bar.
+          },
+          onPageStarted: (String url) {
+            // print("onPageStarted: $url");
+          },
+          onPageFinished: (String url) {
+            // print("onPageFinished: $url");
+          },
+          onWebResourceError: (WebResourceError error) async {
+            // Handle error.
+            print("error: ${error.description}");
+          },
+          onNavigationRequest: (NavigationRequest request) async {
+            print("request.url: ${request.url}");
+
+            InternetConnectionChecker().hasConnection.then((isDeviceConnected) {
+              if (isDeviceConnected == false) {
+                Future.delayed(const Duration(seconds: 1)).then(
+                  (value) => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      fullscreenDialog: true,
+                      builder: (context) => const NoInternetWidget(),
+                    ),
+                  ),
+                );
+              }
+            });
+
+            setState(() {
+              url = request.url;
+            });
+
+            // if (request.url.contains("?user_signed_in") ||
+            //     request.url.contains("?user_signed_up")) {
+            if (request.url.contains("https://www.derslig.com/giris") ||
+                request.url.contains("https://www.derslig.com/kayit")) {
+              context.read<LoginRegisterPageProvider>().loginRoute = true;
+            }
+            // }
+
+            return controlRoutes(request);
+          },
+        ),
+      )
+      ..loadRequest(
+        Uri.parse(widget.url),
+      );
+  }
+
+  NavigationDecision controlRoutes(NavigationRequest request) {
+    if (request.url.contains("https://www.derslig.com/profilim")) {
+      context.read<PageProvider>().currentIndex = 1;
+      return NavigationDecision.navigate;
+    } else if (request.url.contains("https://www.derslig.com/dersler")) {
+      context.read<PageProvider>().currentIndex = pages.length - 1;
+      return NavigationDecision.navigate;
+    } else if (request.url == "https://www.derslig.com/ogrenci") {
+      context.read<PageProvider>().currentIndex = 0;
+      return NavigationDecision.navigate;
+    } else if (request.url == "https://www.derslig.com/pro" ||
+        request.url.contains("https://www.derslig.com/siparis")) {
+      if (context.read<LoginRegisterPageProvider>().isLogin && Platform.isIOS) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DersligProPage(),
+            fullscreenDialog: true,
+          ),
+        );
+        //dont navigate to url
+        return NavigationDecision.prevent;
+      } else {
+        return NavigationDecision.navigate;
+      }
+    } else if (request.url.contains("https://www.derslig.com/cikis")) {
+      HiveHelpers.logout(context);
+
+      return NavigationDecision.navigate;
+    } else if (request.url.contains("https://www.derslig.com/kurumsal") ||
+        request.url.contains("https://www.derslig.com/pro/lgs") ||
+        request.url.contains("https://www.derslig.com/pro/yks")) {
+      return NavigationDecision.prevent;
+    } else {
+      return NavigationDecision.navigate;
+    }
+  }
+
+  Future<void> oneSignalTags() async {
+    if (context.read<LoginRegisterPageProvider>().isLogin) {
+      // bool isPro =
+      //     context.read<LoginRegisterPageProvider>().userModel?.isPremium == 1;
+      // int userType =
+      //     context.read<LoginRegisterPageProvider>().userModel?.type ?? 0;
+      UserModel userModel =
+          context.read<LoginRegisterPageProvider>().userModel!;
+      await OneSignal.login(userModel.id.toString());
+      Map<String, dynamic> tags = userModel.toJsonForOneSignal();
+      tags.remove("id");
+      // log("tags: $tags");
+
+      // OneSignal.User.removeTags(tags.keys.toList());
+      OneSignal.User.addTags(tags);
+
+      OneSignal.User.addEmail(userModel.email ?? "");
+      // OneSignal.User.addSms(userModel.phone ?? "");
+
+      // tags.forEach((key, value) {
+      //   OneSignal.User.addTagWithKey(key, value ?? "-");
+      // });
+      // OneSignal.User.addTagWithKey("isPro", isPro.toString());
+      // OneSignal.User.addTagWithKey("userType", userType.toString());
+    }
   }
 }

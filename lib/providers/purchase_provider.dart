@@ -32,8 +32,8 @@ class PurchaseProvider with ChangeNotifier {
     } else if (Platform.isIOS) {
       configuration =
           PurchasesConfiguration("appl_VjzrIVjfeEsQXHftXmwCdBasNQK");
+      await Purchases.configure(configuration);
     }
-    await Purchases.configure(configuration!);
   }
 
   // Future<GeneralResponseModel> buyPollen(PolenEkleModel polenEkleModel) async {

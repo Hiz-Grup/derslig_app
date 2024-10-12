@@ -3,6 +3,7 @@ import 'package:derslig/models/user_model.dart';
 import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 
 class HiveHelpers {
@@ -38,6 +39,7 @@ class HiveHelpers {
     Hive.box('login').delete('loginModel');
     Hive.box('user').delete('status');
     Hive.box('user').delete('userModel');
+    OneSignal.logout();
     context.read<LoginRegisterPageProvider>().isLogin = false;
     context.read<LoginRegisterPageProvider>().userModel = null;
   }

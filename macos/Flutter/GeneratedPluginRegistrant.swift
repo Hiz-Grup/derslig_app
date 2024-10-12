@@ -15,7 +15,7 @@ import url_launcher_macos
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   ConnectivityPlugin.register(with: registry.registrar(forPlugin: "ConnectivityPlugin"))
   InAppPurchasePlugin.register(with: registry.registrar(forPlugin: "InAppPurchasePlugin"))
-  FLTPackageInfoPlusPlugin.register(with: registry.registrar(forPlugin: "FLTPackageInfoPlusPlugin"))
+  FPPPackageInfoPlusPlugin.register(with: registry.registrar(forPlugin: "FPPPackageInfoPlusPlugin"))
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
   PurchasesFlutterPlugin.register(with: registry.registrar(forPlugin: "PurchasesFlutterPlugin"))
   UrlLauncherPlugin.register(with: registry.registrar(forPlugin: "UrlLauncherPlugin"))

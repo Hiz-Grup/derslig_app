@@ -7,6 +7,7 @@ import 'package:derslig/helper/url_launcher_helper.dart';
 import 'package:derslig/models/general_response_model.dart';
 import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:derslig/providers/purchase_provider.dart';
+import 'package:derslig/services/one_signal_service.dart';
 import 'package:derslig/views/onboarding_page.dart';
 import 'package:derslig/views/web_view_page.dart';
 import 'package:derslig/views/widgets/dialog_widgets.dart';
@@ -40,8 +41,7 @@ class _SplashPageState extends State<SplashPage> {
       }
     });
 
-    OneSignal.initialize("9a0b6b0b-e1b8-41de-b071-2feae869602c");
-
+    OneSignalService.init();
     SchedulerBinding.instance.addPostFrameCallback(
       (_) async {
         GeneralResponseModel versionResponse =
@@ -72,8 +72,6 @@ class _SplashPageState extends State<SplashPage> {
         }
       },
     );
-
-    //TARAYICI ÜZERİNDEN ÇIKIŞ YAPINCA KOMPLE ÇIK
 
     super.initState();
   }
