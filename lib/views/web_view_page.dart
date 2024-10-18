@@ -39,9 +39,8 @@ class _WebViewPageState extends State<WebViewPage> {
 
   @override
   void initState() {
-    // //SECTION - OneSignal
-    // oneSignalTags();
     //SECTION - WebView
+
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
       params = WebKitWebViewControllerCreationParams(
@@ -177,6 +176,12 @@ class _WebViewPageState extends State<WebViewPage> {
               ),
             ],
           ),
+          if (context.watch<LoginRegisterPageProvider>().isLoading)
+            const Center(
+              child: CircularProgressIndicator(
+                color: AppTheme.pink,
+              ),
+            ),
           Positioned(
             bottom: 30,
             right: 30,
@@ -242,7 +247,7 @@ class _WebViewPageState extends State<WebViewPage> {
       onTap: (index) {
         context.read<PageProvider>().currentIndex = index;
         print("index: $index");
-        if (pages[index].title != "Derslig Pro" || Platform.isAndroid) {
+        if (pages[index].title != "Derslig Pro") {
           context.read<PageProvider>().pageIndex = 0;
           print("pages[index].url: ${pages[index].url}");
           controller.loadRequest(
@@ -305,7 +310,7 @@ class _WebViewPageState extends State<WebViewPage> {
             // print("onPageStarted: $url");
           },
           onPageFinished: (String url) {
-            // print("onPageFinished: $url");
+            context.read<LoginRegisterPageProvider>().isLoading = false;
           },
           onWebResourceError: (WebResourceError error) async {
             // Handle error.
@@ -327,7 +332,7 @@ class _WebViewPageState extends State<WebViewPage> {
                 );
               }
             });
-
+            context.read<LoginRegisterPageProvider>().isLoading = true;
             setState(() {
               url = request.url;
             });
@@ -361,7 +366,7 @@ class _WebViewPageState extends State<WebViewPage> {
       return NavigationDecision.navigate;
     } else if (request.url == "https://www.derslig.com/pro" ||
         request.url.contains("https://www.derslig.com/siparis")) {
-      if (context.read<LoginRegisterPageProvider>().isLogin && Platform.isIOS) {
+      if (context.read<LoginRegisterPageProvider>().isLogin) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -389,28 +394,28 @@ class _WebViewPageState extends State<WebViewPage> {
 
   Future<void> oneSignalTags() async {
     if (context.read<LoginRegisterPageProvider>().isLogin) {
-      // bool isPro =
-      //     context.read<LoginRegisterPageProvider>().userModel?.isPremium == 1;
-      // int userType =
-      //     context.read<LoginRegisterPageProvider>().userModel?.type ?? 0;
       UserModel userModel =
           context.read<LoginRegisterPageProvider>().userModel!;
+      bool isPro = userModel.isPremium == 1;
+      int userClass = userModel.gradeId ?? 0;
+
       await OneSignal.login(userModel.id.toString());
-      Map<String, dynamic> tags = userModel.toJsonForOneSignal();
-      tags.remove("id");
-      // log("tags: $tags");
-
-      // OneSignal.User.removeTags(tags.keys.toList());
-      OneSignal.User.addTags(tags);
-
+      String phone = (userModel.phone ?? "")
+          .replaceAll("+9", "")
+          .replaceAll(" ", "")
+          .replaceAll("(", "")
+          .replaceAll(")", "")
+          .replaceAll("-", "");
+      if (phone.length == 10) {
+        phone = "0$phone";
+      }
+      phone = "+9$phone";
+      log("phone: $phone");
+      OneSignal.User.addSms(phone);
       OneSignal.User.addEmail(userModel.email ?? "");
-      // OneSignal.User.addSms(userModel.phone ?? "");
-
-      // tags.forEach((key, value) {
-      //   OneSignal.User.addTagWithKey(key, value ?? "-");
-      // });
-      // OneSignal.User.addTagWithKey("isPro", isPro.toString());
-      // OneSignal.User.addTagWithKey("userType", userType.toString());
+      OneSignal.User.removeTags(["class", "isPremium"]);
+      OneSignal.User.addTagWithKey("class", userClass);
+      OneSignal.User.addTagWithKey("isPremium", isPro.toString());
     }
   }
 }

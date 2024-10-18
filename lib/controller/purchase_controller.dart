@@ -69,14 +69,13 @@ class PurchaseController {
         );
       } else {
         return GeneralResponseModel(
-          message:
-              "Telefonunuz sistemde kayıtlı değil! Lütfen profil ayarlarından güncelleyiniz.",
+          message: json.decode(response.body)["error"],
           success: false,
         );
       }
     } catch (e) {
       return GeneralResponseModel(
-        message: "Bir hata oluştu",
+        message: "Bir hata oluştu!",
         success: false,
       );
     }

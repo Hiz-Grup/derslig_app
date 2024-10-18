@@ -7,6 +7,7 @@ import 'package:derslig/providers/page_provider.dart';
 import 'package:derslig/providers/purchase_provider.dart';
 import 'package:derslig/views/back_button_widget.dart';
 import 'package:derslig/views/splash_page.dart';
+import 'package:derslig/views/widgets/loading_dialog.dart';
 import 'package:derslig/views/widgets/toast_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -178,31 +179,24 @@ class _DersligProPageState extends State<DersligProPage> {
                           SizedBox(
                             height: deviceHeightSize(context, 20),
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                _products[index].price,
-                                style: AppTheme.blackTextStyle(context, 32,
-                                    color: AppTheme.blue),
-                              ),
-                              // Text(
-                              //   " / ",
-                              //   style: AppTheme.boldTextStyle(context, 20,
-                              //       color: AppTheme.grey),
-                              // ),
-                              // Text(
-                              //   _products[index].duration,
-                              //   style: AppTheme.boldTextStyle(context, 20,
-                              //       color: AppTheme.blue),
-                              // ),
-                            ],
+                          Text(
+                            _products[index].price,
+                            style: AppTheme.blackTextStyle(context, 32,
+                                color: AppTheme.blue),
                           ),
                           SizedBox(
                             height: deviceHeightSize(context, 10),
                           ),
                           MaterialButton(
                             onPressed: () async {
+                              if (context.read<PurchaseProvider>().buyState ==
+                                  BuyState.busy) {
+                                return;
+                              }
+
+                              final LoadingDialog loadingDialog =
+                                  LoadingDialog(context);
+                              loadingDialog.show();
                               context
                                   .read<PurchaseProvider>()
                                   .setBuyState(BuyState.busy);
@@ -224,6 +218,7 @@ class _DersligProPageState extends State<DersligProPage> {
                                   ToastWidgets.errorToast(
                                       context, value.message);
                                 }
+                                loadingDialog.dismiss();
                                 context
                                     .read<PurchaseProvider>()
                                     .setBuyState(BuyState.idle);

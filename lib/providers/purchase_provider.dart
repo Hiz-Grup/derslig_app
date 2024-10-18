@@ -28,7 +28,8 @@ class PurchaseProvider with ChangeNotifier {
 
     PurchasesConfiguration? configuration;
     if (Platform.isAndroid) {
-      // configuration = PurchasesConfiguration(<public_google_api_key>);
+      configuration =
+          PurchasesConfiguration("goog_wRHmEaOoDcFcIIYldGLpguNccvC");
     } else if (Platform.isIOS) {
       configuration =
           PurchasesConfiguration("appl_VjzrIVjfeEsQXHftXmwCdBasNQK");
@@ -46,18 +47,32 @@ class PurchaseProvider with ChangeNotifier {
   // }
 
   getProductDetails() async {
-    const Set<String> _kIds = <String>{
-      '1aylikdersligpro',
-      '3aylikdersligpro',
-      '6aylikdersligpro',
-      '12aylikdersligpro',
-    };
-    List<String> _kIdsForSort = [
-      '1aylikdersligpro',
-      '3aylikdersligpro',
-      '6aylikdersligpro',
-      '12aylikdersligpro',
-    ];
+    Set<String> _kIds = Platform.isIOS
+        ? <String>{
+            '1aylikdersligpro',
+            '3aylikdersligpro',
+            '6aylikdersligpro',
+            '12aylikdersligpro',
+          }
+        : <String>{
+            '1aylikdersligpro_android',
+            '3aylikdersligpro_android',
+            '6aylikdersligpro_android',
+            '12aylikdersligpro_android',
+          };
+    List<String> _kIdsForSort = Platform.isIOS
+        ? [
+            '1aylikdersligpro',
+            '3aylikdersligpro',
+            '6aylikdersligpro',
+            '12aylikdersligpro',
+          ]
+        : [
+            '1aylikdersligpro_android',
+            '3aylikdersligpro_android',
+            '6aylikdersligpro_android',
+            '12aylikdersligpro_android',
+          ];
     final ProductDetailsResponse response =
         await InAppPurchase.instance.queryProductDetails(_kIds);
     if (response.notFoundIDs.isNotEmpty) {

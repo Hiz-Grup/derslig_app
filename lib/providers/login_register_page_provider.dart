@@ -56,6 +56,13 @@ class LoginRegisterPageProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+  set isLoading(value) {
+    _isLoading = value;
+    notifyListeners();
+  }
+
   Future<LoginResponseModel?> login(String email, String password) async {
     return await _loginRegisterPageController.login(email, password);
   }
