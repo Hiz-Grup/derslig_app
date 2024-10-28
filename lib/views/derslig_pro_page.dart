@@ -51,8 +51,7 @@ class _DersligProPageState extends State<DersligProPage> {
           print('error');
           ToastWidgets.errorToast(
               context,
-              "Satın alma işlemi başarısız oldu. " +
-                  purchaseDetails.error.toString());
+              "Satın alma işlemi başarısız oldu. ${purchaseDetails.error}");
           context.read<PurchaseProvider>().setBuyState(BuyState.idle);
         } else if (purchaseDetails.status == PurchaseStatus.purchased ||
             purchaseDetails.status == PurchaseStatus.restored) {
