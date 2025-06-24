@@ -17,7 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:webview_cookie_manager/webview_cookie_manager.dart';
+
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
@@ -50,7 +50,6 @@ class _WebViewPageState extends State<WebViewPage> {
       params = const PlatformWebViewControllerCreationParams();
     }
 
-    // SchedulerBinding.instance.addPostFrameCallback((_) async {
     cookies.add(const WebViewCookie(
         name: "derslig_webview", value: "1", domain: "derslig.com"));
     cookies.add(const WebViewCookie(
@@ -58,25 +57,8 @@ class _WebViewPageState extends State<WebViewPage> {
 
     setWebViewController(params);
 
-    List<Cookie> cookieList = cookies
-        .map((e) => Cookie(
-              e.name,
-              e.value,
-            )
-              ..expires = DateTime.now().add(const Duration(days: 365 * 5))
-              ..httpOnly = false)
-        .toList();
-    cookieManager.setCookies(
-      cookieList,
-      origin: 'https://.derslig.com',
-    );
-
-    controller.enableZoom(false);
-
     super.initState();
   }
-
-  final cookieManager = WebviewCookieManager();
   @override
   Widget build(BuildContext context) {
     LoginResponseModel? loginResponseModel = HiveHelpers.getLoginModel();
@@ -108,23 +90,12 @@ class _WebViewPageState extends State<WebViewPage> {
       cookies.add(const WebViewCookie(
           name: "cookieBarOK", value: "1", domain: "derslig.com"));
 
-      // controller.loadRequest(
-      //   Uri.parse(widget.url),
-      //   headers: {
-      //     "Cookie": cookies.map((e) => "${e.name}=${e.value}").join("; "),
-      //   },
-      // );
-      List<Cookie> cookieList = cookies
-          .map((e) => Cookie(
-                e.name,
-                e.value,
-              )
-                ..expires = DateTime.now().add(const Duration(days: 365 * 5))
-                ..httpOnly = false)
-          .toList();
-      cookieManager.setCookies(
-        cookieList,
-        origin: 'https://.derslig.com',
+      // Modern webview_flutter ile cookie'leri header olarak gönderme
+      controller.loadRequest(
+        Uri.parse(widget.url),
+        headers: {
+          "Cookie": cookies.map((e) => "${e.name}=${e.value}").join("; "),
+        },
       );
       isWork = true;
     }
@@ -134,13 +105,15 @@ class _WebViewPageState extends State<WebViewPage> {
 
     if (context.read<LoginRegisterPageProvider>().loginRoute == true &&
         url == "https://www.derslig.com/ogrenci") {
-      cookieManager.getCookies('https://derslig.com').then((value) {
+      // Modern webview_flutter ile JavaScript kullanarak cookie'leri okuma
+      controller.runJavaScriptReturningResult('document.cookie').then((value) {
         // log("document.cookie: $value");
+        String cookieString = value.toString();
         RegExp regExpXsrg = RegExp(r'XSRF-TOKEN=(.*?);');
-        String xsrfToken = regExpXsrg.firstMatch(value.toString())!.group(1)!;
+        String xsrfToken = regExpXsrg.firstMatch(cookieString)!.group(1)!;
         RegExp regExpDersligCookie = RegExp(r'derslig_cookie=(.*?);');
         String dersligCookie =
-            regExpDersligCookie.firstMatch(value.toString())!.group(1)!;
+            regExpDersligCookie.firstMatch(cookieString)!.group(1)!;
         LoginResponseModel loginResponseModel = LoginResponseModel(
           xsrfToken: xsrfToken,
           dersligCookie: dersligCookie,
