@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.derslig.app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -25,7 +25,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
@@ -42,6 +42,7 @@ android {
 
 dependencies {
     implementation("androidx.multidex:multidex:2.0.1")
+    implementation("com.android.billingclient:billing:7.1.1")
 }
 
 flutter {

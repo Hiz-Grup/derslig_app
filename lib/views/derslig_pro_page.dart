@@ -41,6 +41,12 @@ class _DersligProPageState extends State<DersligProPage> {
     super.initState();
   }
 
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
   void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
     purchaseDetailsList.forEach((PurchaseDetails purchaseDetails) async {
       print('purchaseDetails: ${purchaseDetails.productID}');
@@ -48,47 +54,51 @@ class _DersligProPageState extends State<DersligProPage> {
         print('pending');
       } else {
         if (purchaseDetails.status == PurchaseStatus.error) {
-          print('error');
+          print('error: ${purchaseDetails.error?.message}');
           ToastWidgets.errorToast(
               context,
-              "Satın alma işlemi başarısız oldu. ${purchaseDetails.error}");
+              "Satın alma işlemi başarısız oldu. ${purchaseDetails.error?.message ?? 'Bilinmeyen hata'}");
           context.read<PurchaseProvider>().setBuyState(BuyState.idle);
         } else if (purchaseDetails.status == PurchaseStatus.purchased ||
             purchaseDetails.status == PurchaseStatus.restored) {
           print('purchased');
 
           context.read<PurchaseProvider>().setBuyState(BuyState.busy);
-          context
-              .read<PurchaseProvider>()
-              .buyProduct(
-                dersligCookie: HiveHelpers.getLoginModel()!.dersligCookie,
-                xsrfToken: HiveHelpers.getLoginModel()!.xsrfToken,
-                index: _products.indexWhere(
-                  (element) => element.id == purchaseDetails.productID,
-                ),
-              )
-              .then(
-            (value) {
-              context.read<PurchaseProvider>().setBuyState(BuyState.idle);
-              if (value.success == true) {
-                Navigator.pushReplacementNamed(
-                  context,
-                  SplashPage.routeName,
-                );
-              }
-              ToastWidgets.responseToast(context, value);
-            },
-          );
-          // bool valid = await _verifyPurchase(purchaseDetails);
-          // if (valid) {
-          //   _deliverProduct(purchaseDetails);
-          // } else {
-          //   _handleInvalidPurchase(purchaseDetails);
-          // }
+          try {
+            await context
+                .read<PurchaseProvider>()
+                .buyProduct(
+                  dersligCookie: HiveHelpers.getLoginModel()!.dersligCookie,
+                  xsrfToken: HiveHelpers.getLoginModel()!.xsrfToken,
+                  index: _products.indexWhere(
+                    (element) => element.id == purchaseDetails.productID,
+                  ),
+                )
+                .then(
+              (value) {
+                context.read<PurchaseProvider>().setBuyState(BuyState.idle);
+                if (value.success == true) {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    SplashPage.routeName,
+                  );
+                }
+                ToastWidgets.responseToast(context, value);
+              },
+            );
+          } catch (e) {
+            print("Satın alma işlemi sırasında hata: $e");
+            context.read<PurchaseProvider>().setBuyState(BuyState.idle);
+            ToastWidgets.errorToast(context, "Satın alma işlemi başarısız oldu. Lütfen tekrar deneyin.");
+          }
         }
         if (purchaseDetails.pendingCompletePurchase) {
           print('pendingCompletePurchase');
-          await InAppPurchase.instance.completePurchase(purchaseDetails);
+          try {
+            await InAppPurchase.instance.completePurchase(purchaseDetails);
+          } catch (e) {
+            print("completePurchase sırasında hata: $e");
+          }
           context.read<PurchaseProvider>().setBuyState(BuyState.idle);
         }
       }
@@ -103,13 +113,17 @@ class _DersligProPageState extends State<DersligProPage> {
         context.read<PurchaseProvider>().products[
             selectedPollenIndex]; // Saved earlier from queryProductDetails().
 
-    final PurchaseParam purchaseParam =
-        PurchaseParam(productDetails: productDetails);
-    // if (_isConsumable(productDetails)) {
-    InAppPurchase.instance.buyConsumable(purchaseParam: purchaseParam);
-    // } else {
-    // InAppPurchase.instance.buyNonConsumable(purchaseParam: purchaseParam);
-    // }
+    try {
+      final PurchaseParam purchaseParam =
+          PurchaseParam(productDetails: productDetails);
+      
+      // Google Play Billing Library 7.0.0 ile uyumlu satın alma
+      InAppPurchase.instance.buyConsumable(purchaseParam: purchaseParam);
+    } catch (e) {
+      print("Satın alma başlatılırken hata: $e");
+      context.read<PurchaseProvider>().setBuyState(BuyState.idle);
+      ToastWidgets.errorToast(context, "Satın alma başlatılamadı. Lütfen tekrar deneyin.");
+    }
   }
 
   List<ProductDetails> _products = [];
@@ -199,29 +213,38 @@ class _DersligProPageState extends State<DersligProPage> {
                               context
                                   .read<PurchaseProvider>()
                                   .setBuyState(BuyState.busy);
-                              context
-                                  .read<PurchaseProvider>()
-                                  .checkUser(
-                                      xsrfToken: HiveHelpers.getLoginModel()!
-                                          .xsrfToken,
-                                      dersligCookie:
-                                          HiveHelpers.getLoginModel()!
-                                              .dersligCookie)
-                                  .then((value) {
-                                if (value.success == true) {
+                              try {
+                                await context
+                                    .read<PurchaseProvider>()
+                                    .checkUser(
+                                        xsrfToken: HiveHelpers.getLoginModel()!
+                                            .xsrfToken,
+                                        dersligCookie:
+                                            HiveHelpers.getLoginModel()!
+                                                .dersligCookie)
+                                    .then((value) {
+                                  if (value.success == true) {
+                                    context
+                                        .read<PurchaseProvider>()
+                                        .selectedPollenIndex = index;
+                                    buyProduct();
+                                  } else {
+                                    ToastWidgets.errorToast(
+                                        context, value.message);
+                                  }
+                                  loadingDialog.dismiss();
                                   context
                                       .read<PurchaseProvider>()
-                                      .selectedPollenIndex = index;
-                                  buyProduct();
-                                } else {
-                                  ToastWidgets.errorToast(
-                                      context, value.message);
-                                }
+                                      .setBuyState(BuyState.idle);
+                                });
+                              } catch (e) {
+                                print("Kullanıcı kontrolü sırasında hata: $e");
                                 loadingDialog.dismiss();
                                 context
                                     .read<PurchaseProvider>()
                                     .setBuyState(BuyState.idle);
-                              });
+                                ToastWidgets.errorToast(context, "Kullanıcı kontrolü başarısız oldu. Lütfen tekrar deneyin.");
+                              }
                             },
                             color: AppTheme.pink,
                             shape: RoundedRectangleBorder(
