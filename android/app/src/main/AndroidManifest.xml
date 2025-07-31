@@ -1,5 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.derslig.app">
+    
+    <!-- Android 15 (API düzeyi 35) için gerekli izinler -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.android.vending.BILLING" />
+    
    <application
         android:label="derslig"
         android:name="${applicationName}"
@@ -30,5 +36,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+            
+        <!-- Google Play Billing Library için meta-data -->
+        <meta-data
+            android:name="com.google.android.play.billingclient.version"
+            android:value="7.1.1"
+            tools:replace="android:value" />
     </application>
 </manifest>

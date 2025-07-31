@@ -24,15 +24,17 @@ class PurchaseProvider with ChangeNotifier {
   }
 
   Future<void> initPlatformState() async {
-    await Purchases.setDebugLogsEnabled(true);
+    await Purchases.setLogLevel(LogLevel.debug);
 
     PurchasesConfiguration? configuration;
     if (Platform.isAndroid) {
-      configuration =
-          PurchasesConfiguration("goog_wRHmEaOoDcFcIIYldGLpguNccvC");
+      configuration = PurchasesConfiguration("goog_wRHmEaOoDcFcIIYldGLpguNccvC");
+      
+      await Purchases.configure(configuration);
+      
+      await Purchases.enableAdServicesAttributionTokenCollection();
     } else if (Platform.isIOS) {
-      configuration =
-          PurchasesConfiguration("appl_VjzrIVjfeEsQXHftXmwCdBasNQK");
+      configuration = PurchasesConfiguration("appl_VjzrIVjfeEsQXHftXmwCdBasNQK");
       await Purchases.configure(configuration);
     }
   }
@@ -73,39 +75,31 @@ class PurchaseProvider with ChangeNotifier {
             '6aylikdersligpro_android',
             '12aylikdersligpro_android',
           ];
-    final ProductDetailsResponse response =
-        await InAppPurchase.instance.queryProductDetails(_kIds);
-    if (response.notFoundIDs.isNotEmpty) {
-      // Handle the error.
-      print('notFoundIDs: ${response.notFoundIDs}');
+          
+    try {
+      final ProductDetailsResponse response =
+          await InAppPurchase.instance.queryProductDetails(_kIds);
+      if (response.notFoundIDs.isNotEmpty) {
+        // Handle the error.
+        print('notFoundIDs: ${response.notFoundIDs}');
+      }
+
+      if (response.notFoundIDs.isNotEmpty && checkCount < 3) {
+        Future.delayed(const Duration(seconds: 1), () {
+          getProductDetails();
+          checkCount++;
+        });
+      }
+      products = response.productDetails;
+
+      //sort
+      products.sort((a, b) =>
+          _kIdsForSort.indexOf(a.id).compareTo(_kIdsForSort.indexOf(b.id)));
+
+      notifyListeners();
+    } catch (e) {
+      print("Ürün detayları alınırken hata: $e");
     }
-
-    if (response.notFoundIDs.isNotEmpty && checkCount < 3) {
-      Future.delayed(Duration(seconds: 1), () {
-        getProductDetails();
-        checkCount++;
-      });
-    }
-    products = response.productDetails;
-
-    //sort
-    products.sort((a, b) =>
-        _kIdsForSort.indexOf(a.id).compareTo(_kIdsForSort.indexOf(b.id)));
-
-    notifyListeners();
-    // print(products[0].title +
-    //     ' - ' +
-    //     products[0].description +
-    //     ' - ' +
-    //     products[0].price +
-    //     ' - ' +
-    //     products[0].id +
-    //     ' - ' +
-    //     products[0].currencyCode +
-    //     ' - ' +
-    //     products[0].rawPrice.toString() +
-    //     ' - ' +
-    //     products[0].currencySymbol);
   }
 
   setBuyState(BuyState state) {
