@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
 import 'package:derslig/helper/hive_helpers.dart';
+import 'package:derslig/helper/macera_yolu_helper.dart';
 import 'package:derslig/models/login_response_model.dart';
 import 'package:derslig/models/page_model.dart';
 import 'package:derslig/models/user_model.dart';
@@ -20,6 +21,7 @@ import 'package:provider/provider.dart';
 
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 class WebViewPage extends StatefulWidget {
   const WebViewPage({Key? key, this.url = "https://www.derslig.com/giris"})
@@ -45,15 +47,23 @@ class _WebViewPageState extends State<WebViewPage> {
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
       params = WebKitWebViewControllerCreationParams(
         allowsInlineMediaPlayback: true,
+        mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{},
+      );
+    } else if (WebViewPlatform.instance is AndroidWebViewPlatform) {
+      params = AndroidWebViewControllerCreationParams(
+        // H5P ve Macera Yolu içerikleri için kritik Android ayarları
       );
     } else {
       params = const PlatformWebViewControllerCreationParams();
     }
 
+    // Derslig WebView detection cookies - tüm alt domain'ler için
     cookies.add(const WebViewCookie(
-        name: "derslig_webview", value: "1", domain: "derslig.com"));
+        name: "derslig_webview", value: "1", domain: ".derslig.com", path: "/"));
     cookies.add(const WebViewCookie(
-        name: "cookieBarOK", value: "1", domain: "derslig.com"));
+        name: "cookieBarOK", value: "1", domain: ".derslig.com", path: "/"));
+    cookies.add(const WebViewCookie(
+        name: "derslig_mobile_app", value: "true", domain: ".derslig.com", path: "/"));
 
     setWebViewController(params);
 
@@ -85,10 +95,13 @@ class _WebViewPageState extends State<WebViewPage> {
           path: "/",
         ),
       ];
+      // Enhanced WebView detection cookies
       cookies.add(const WebViewCookie(
-          name: "derslig_webview", value: "1", domain: "derslig.com"));
+          name: "derslig_webview", value: "1", domain: ".derslig.com", path: "/"));
       cookies.add(const WebViewCookie(
-          name: "cookieBarOK", value: "1", domain: "derslig.com"));
+          name: "cookieBarOK", value: "1", domain: ".derslig.com", path: "/"));
+      cookies.add(const WebViewCookie(
+          name: "derslig_mobile_app", value: "true", domain: ".derslig.com", path: "/"));
 
       // Modern webview_flutter ile cookie'leri header olarak gönderme
       controller.loadRequest(
@@ -274,6 +287,8 @@ class _WebViewPageState extends State<WebViewPage> {
     controller = WebViewController.fromPlatformCreationParams(params)
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
+      ..setUserAgent('Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36 DersligApp/1.0')
+      ..enableZoom(true)
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (int progress) {
@@ -284,6 +299,9 @@ class _WebViewPageState extends State<WebViewPage> {
           },
           onPageFinished: (String url) {
             context.read<LoginRegisterPageProvider>().isLoading = false;
+            
+            // H5P ve Macera Yolu içerikleri için özel JavaScript injection
+            _injectMaceraYoluSupport();
           },
           onWebResourceError: (WebResourceError error) async {
             // Handle error.
@@ -321,10 +339,14 @@ class _WebViewPageState extends State<WebViewPage> {
             return controlRoutes(request);
           },
         ),
-      )
-      ..loadRequest(
-        Uri.parse(widget.url),
       );
+
+    // H5P ve Macera Yolu için ek WebView optimizasyonları
+    print('WebView configured for H5P and Macera Yolu content support');
+
+    controller.loadRequest(
+      Uri.parse(widget.url),
+    );
   }
 
   NavigationDecision controlRoutes(NavigationRequest request) {
@@ -363,6 +385,25 @@ class _WebViewPageState extends State<WebViewPage> {
     } else {
       return NavigationDecision.navigate;
     }
+  }
+
+  // H5P ve Macera Yolu desteği için JavaScript injection
+  void _injectMaceraYoluSupport() {
+    MaceraYoluHelper.logDebugInfo('Starting Macera Yolu support injection');
+    
+    // Debug detection script çalıştır
+    controller.runJavaScriptReturningResult(MaceraYoluHelper.getH5PDetectionScript())
+        .then((result) {
+      MaceraYoluHelper.logDebugInfo('Detection result: $result');
+    }).catchError((error) {
+      MaceraYoluHelper.logDebugInfo('Detection error: $error');
+    });
+    
+    // Ana fix script'ini çalıştır
+    controller.runJavaScript(MaceraYoluHelper.getMaceraYoluFixScript())
+        .catchError((error) {
+      MaceraYoluHelper.logDebugInfo('Fix script error: $error');
+    });
   }
 
   Future<void> oneSignalTags() async {
