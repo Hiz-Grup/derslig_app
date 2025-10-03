@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
@@ -9,7 +8,6 @@ import 'package:derslig/models/page_model.dart';
 import 'package:derslig/models/user_model.dart';
 import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:derslig/providers/page_provider.dart';
-import 'package:derslig/views/back_button_widget.dart';
 import 'package:derslig/views/derslig_pro_page.dart';
 import 'package:derslig/views/widgets/no_internet_widget.dart';
 import 'package:flutter/material.dart';
@@ -132,13 +130,19 @@ class _WebViewPageState extends State<WebViewPage> {
     }
 
     setPages(context);
-    return Scaffold(
-      backgroundColor: Colors.white,
-      bottomNavigationBar: context.watch<LoginRegisterPageProvider>().isLogin &&
-              deviceHeight(context) > 500
-          ? bottomNavigation()
-          : null,
-      body: Stack(
+    return WillPopScope(
+      onWillPop: () async {
+        if (await controller.canGoBack()) {
+          controller.goBack();
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        bottomNavigationBar:
+            deviceHeight(context) > 500 ? bottomNavigation() : null,
+        body: Stack(
         children: [
           Column(
             children: [
@@ -157,30 +161,8 @@ class _WebViewPageState extends State<WebViewPage> {
                 color: AppTheme.pink,
               ),
             ),
-          Positioned(
-            bottom: 30,
-            right: 30,
-            child: FloatingActionButton(
-              backgroundColor: Colors.white,
-              onPressed: () async {
-                if (await controller.canGoBack()) {
-                  controller.goBack();
-                } else {
-                  SystemNavigator.pop();
-                }
-              },
-              child: BackButtonWidget(
-                onPressed: () async {
-                  if (await controller.canGoBack()) {
-                    controller.goBack();
-                  } else {
-                    SystemNavigator.pop();
-                  }
-                },
-              ),
-            ),
-          )
         ],
+        ),
       ),
     );
   }
