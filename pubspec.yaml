@@ -48,15 +48,15 @@ dependencies:
   http: ^1.1.0
   fluttertoast: ^8.2.2
   package_info_plus: ^8.0.0
-  url_launcher: ^6.1.12
   internet_connection_checker: ^1.0.0+1
   connectivity_plus: ^6.1.4
   app_tracking_transparency: ^2.0.4
   webview_flutter_wkwebview: ^3.7.4
-  onesignal_flutter: ^5.3.3
+  onesignal_flutter: ^5.3.4
+  url_launcher: ^6.3.2
 
-dependency_overrides:
-  win32: ^5.5.4
+#dependency_overrides:
+#  win32: ^5.5.4
 
 dev_dependencies:
   flutter_test:

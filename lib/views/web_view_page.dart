@@ -53,6 +53,8 @@ class _WebViewPageState extends State<WebViewPage> {
     cookies.add(const WebViewCookie(
         name: "derslig_webview", value: "1", domain: "derslig.com"));
     cookies.add(const WebViewCookie(
+        name: "derslig_app_version", value: "1", domain: "derslig.com"));
+    cookies.add(const WebViewCookie(
         name: "cookieBarOK", value: "1", domain: "derslig.com"));
 
     setWebViewController(params);

@@ -96,8 +96,8 @@ class _SplashPageState extends State<SplashPage> {
         context,
         onAcceptButtonPressed: () {
           UrlLauncherHelper().launch(Platform.isAndroid
-              ? "https://play.google.com/store/apps/details?id=com.focus.pupa"
-              : "https://apps.apple.com/tr/app/focused-pupa/id1579390348");
+              ? "https://play.google.com/store/apps/details?id=com.derslig.app"
+              : "https://apps.apple.com/us/app/derslig/id6451071489");
         },
         title: "Uygulama Güncellemesi",
         content:

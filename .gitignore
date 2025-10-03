@@ -19,6 +19,7 @@ gitignore
 .pub-cache/
 .pub/
 build/
+devtools_options.yaml
 
 # Dart to JavaScript (dart2js) outputs
 *.dart.js
