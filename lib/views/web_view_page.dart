@@ -140,8 +140,10 @@ class _WebViewPageState extends State<WebViewPage> {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        bottomNavigationBar:
-            deviceHeight(context) > 500 ? bottomNavigation() : null,
+        bottomNavigationBar: deviceHeight(context) > 500 &&
+                context.watch<LoginRegisterPageProvider>().isLogin
+            ? bottomNavigation()
+            : null,
         body: Stack(
         children: [
           Column(
