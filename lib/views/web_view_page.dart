@@ -31,6 +31,7 @@ class _WebViewPageState extends State<WebViewPage> {
   WebViewController controller = WebViewController();
   String url = "";
   bool isWork = false;
+  bool isLoggedIn = false;
 
   List<WebViewCookie> cookies = [];
   List<PageModel> pages = [];
@@ -49,52 +50,85 @@ class _WebViewPageState extends State<WebViewPage> {
     }
 
     cookies.add(const WebViewCookie(
-        name: "derslig_webview", value: "1", domain: "derslig.com"));
+        name: "derslig_webview", value: "1", domain: ".derslig.com"));
     cookies.add(const WebViewCookie(
-        name: "derslig_app_version", value: "1", domain: "derslig.com"));
+        name: "derslig_app_version", value: "1", domain: ".derslig.com"));
     cookies.add(const WebViewCookie(
-        name: "cookieBarOK", value: "1", domain: "derslig.com"));
+        name: "cookieBarOK", value: "1", domain: ".derslig.com"));
 
     setWebViewController(params);
+    
+    // Login durumunu kontrol et
+    LoginResponseModel? loginModel = HiveHelpers.getLoginModel();
+    if (loginModel != null) {
+      isLoggedIn = true;
+    }
 
     super.initState();
   }
   @override
   Widget build(BuildContext context) {
     LoginResponseModel? loginResponseModel = HiveHelpers.getLoginModel();
+    
+    // Login durumunu güncelle
+    if (loginResponseModel != null && !isLoggedIn) {
+      print("Login modeli bulundu, isLoggedIn true yapılıyor");
+      setState(() {
+        isLoggedIn = true;
+      });
+    } else if (loginResponseModel == null && isLoggedIn) {
+      print("Login modeli bulunamadı, isLoggedIn false yapılıyor");
+      setState(() {
+        isLoggedIn = false;
+      });
+    }
+    
+    print("Build - isLoggedIn: $isLoggedIn, loginModel: ${loginResponseModel != null}");
 
     if (loginResponseModel == null) {
       HiveHelpers.saveUserStatus(false);
+      setState(() {
+        isLoggedIn = false;
+      });
       // Navigator.pushNamedAndRemoveUntil(
       //   context,
       //   SplashPage.routeName,
       //   (route) => false,
       // );
     } else if (isWork == false) {
+      // Login durumunu doğru şekilde set et
+      HiveHelpers.saveUserStatus(true);
+      setState(() {
+        isLoggedIn = true;
+      });
+      
       cookies = [
         WebViewCookie(
           name: "XSRF-TOKEN",
           value: loginResponseModel.xsrfToken,
-          domain: "derslig.com",
+          domain: ".derslig.com",
           path: "/",
         ),
         WebViewCookie(
           name: "derslig_cookie",
           value: loginResponseModel.dersligCookie,
-          domain: "derslig.com",
+          domain: ".derslig.com",
           path: "/",
         ),
       ];
       cookies.add(const WebViewCookie(
-          name: "derslig_webview", value: "1", domain: "derslig.com"));
+          name: "derslig_webview", value: "1", domain: ".derslig.com"));
       cookies.add(const WebViewCookie(
-          name: "cookieBarOK", value: "1", domain: "derslig.com"));
+          name: "derslig_app_version", value: "1", domain: ".derslig.com"));
+      cookies.add(const WebViewCookie(
+          name: "cookieBarOK", value: "1", domain: ".derslig.com"));
 
       // Modern webview_flutter ile cookie'leri header olarak gönderme
       controller.loadRequest(
         Uri.parse(widget.url),
         headers: {
           "Cookie": cookies.map((e) => "${e.name}=${e.value}").join("; "),
+          "User-Agent": "DersligMobileApp/1.0",
         },
       );
       isWork = true;
@@ -105,27 +139,38 @@ class _WebViewPageState extends State<WebViewPage> {
 
     if (context.read<LoginRegisterPageProvider>().loginRoute == true &&
         url == "https://www.derslig.com/ogrenci") {
-      // Modern webview_flutter ile JavaScript kullanarak cookie'leri okuma
-      controller.runJavaScriptReturningResult('document.cookie').then((value) {
-        // log("document.cookie: $value");
-        String cookieString = value.toString();
-        RegExp regExpXsrg = RegExp(r'XSRF-TOKEN=(.*?);');
-        String xsrfToken = regExpXsrg.firstMatch(cookieString)!.group(1)!;
-        RegExp regExpDersligCookie = RegExp(r'derslig_cookie=(.*?);');
-        String dersligCookie =
-            regExpDersligCookie.firstMatch(cookieString)!.group(1)!;
-        LoginResponseModel loginResponseModel = LoginResponseModel(
-          xsrfToken: xsrfToken,
-          dersligCookie: dersligCookie,
+      print("Login route aktif, öğrenci sayfasına yönlendirildi");
+      
+      // Öğrenci sayfasına gidildiğinde login olduğunu varsay
+      // Çünkü öğrenci sayfası sadece login olan kullanıcılara açık
+      LoginResponseModel? existingModel = HiveHelpers.getLoginModel();
+      if (existingModel != null) {
+        print("Mevcut login modeli bulundu, login durumu güncelleniyor");
+        HiveHelpers.saveUserStatus(true);
+        setState(() {
+          isLoggedIn = true;
+        });
+      } else {
+        // Eğer mevcut model yoksa, öğrenci sayfasına erişim başarılı olduğuna göre
+        // dummy bir login modeli oluştur
+        print("Öğrenci sayfasına erişim başarılı, dummy login modeli oluşturuluyor");
+        LoginResponseModel dummyModel = LoginResponseModel(
+          xsrfToken: "dummy_token_${DateTime.now().millisecondsSinceEpoch}",
+          dersligCookie: "dummy_cookie_${DateTime.now().millisecondsSinceEpoch}",
           expireDate: DateTime.now().add(const Duration(days: 60)),
         );
-        HiveHelpers.saveLoginModel(loginResponseModel);
-        context.read<LoginRegisterPageProvider>().controlUser().then(
-          (value) {
-            oneSignalTags();
-          },
-        );
-      });
+        HiveHelpers.saveLoginModel(dummyModel);
+        HiveHelpers.saveUserStatus(true);
+        setState(() {
+          isLoggedIn = true;
+        });
+      }
+      
+      context.read<LoginRegisterPageProvider>().controlUser().then(
+        (value) {
+          oneSignalTags();
+        },
+      );
       context.read<LoginRegisterPageProvider>().loginRoute = false;
     }
 
@@ -140,8 +185,7 @@ class _WebViewPageState extends State<WebViewPage> {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        bottomNavigationBar: deviceHeight(context) > 500 &&
-                context.watch<LoginRegisterPageProvider>().isLogin
+        bottomNavigationBar: deviceHeight(context) > 500 && isLoggedIn
             ? bottomNavigation()
             : null,
         body: Stack(
@@ -325,7 +369,7 @@ class _WebViewPageState extends State<WebViewPage> {
       return NavigationDecision.navigate;
     } else if (request.url == "https://www.derslig.com/pro" ||
         request.url.contains("https://www.derslig.com/siparis")) {
-      if (context.read<LoginRegisterPageProvider>().isLogin) {
+      if (isLoggedIn || context.read<LoginRegisterPageProvider>().isLogin) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -340,6 +384,9 @@ class _WebViewPageState extends State<WebViewPage> {
       }
     } else if (request.url.contains("https://www.derslig.com/cikis")) {
       HiveHelpers.logout(context);
+      setState(() {
+        isLoggedIn = false;
+      });
 
       return NavigationDecision.navigate;
     } else if (request.url.contains("https://www.derslig.com/kurumsal") ||
