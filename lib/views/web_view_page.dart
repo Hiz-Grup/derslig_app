@@ -141,8 +141,6 @@ class _WebViewPageState extends State<WebViewPage> {
         url == "https://www.derslig.com/ogrenci") {
       print("Login route aktif, öğrenci sayfasına yönlendirildi");
       
-      // Öğrenci sayfasına gidildiğinde login olduğunu varsay
-      // Çünkü öğrenci sayfası sadece login olan kullanıcılara açık
       LoginResponseModel? existingModel = HiveHelpers.getLoginModel();
       if (existingModel != null) {
         print("Mevcut login modeli bulundu, login durumu güncelleniyor");
@@ -151,9 +149,6 @@ class _WebViewPageState extends State<WebViewPage> {
           isLoggedIn = true;
         });
       } else {
-        // Eğer mevcut model yoksa, öğrenci sayfasına erişim başarılı olduğuna göre
-        // dummy bir login modeli oluştur
-        print("Öğrenci sayfasına erişim başarılı, dummy login modeli oluşturuluyor");
         LoginResponseModel dummyModel = LoginResponseModel(
           xsrfToken: "dummy_token_${DateTime.now().millisecondsSinceEpoch}",
           dersligCookie: "dummy_cookie_${DateTime.now().millisecondsSinceEpoch}",

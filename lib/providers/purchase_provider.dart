@@ -24,18 +24,26 @@ class PurchaseProvider with ChangeNotifier {
   }
 
   Future<void> initPlatformState() async {
-    await Purchases.setLogLevel(LogLevel.debug);
+    try {
+      if (Platform.isAndroid || Platform.isIOS) {
+        await Purchases.setLogLevel(LogLevel.debug);
 
-    PurchasesConfiguration? configuration;
-    if (Platform.isAndroid) {
-      configuration = PurchasesConfiguration("goog_wRHmEaOoDcFcIIYldGLpguNccvC");
-      
-      await Purchases.configure(configuration);
-      
-      await Purchases.enableAdServicesAttributionTokenCollection();
-    } else if (Platform.isIOS) {
-      configuration = PurchasesConfiguration("appl_VjzrIVjfeEsQXHftXmwCdBasNQK");
-      await Purchases.configure(configuration);
+        PurchasesConfiguration? configuration;
+        if (Platform.isAndroid) {
+          configuration = PurchasesConfiguration("goog_wRHmEaOoDcFcIIYldGLpguNccvC");
+          
+          await Purchases.configure(configuration);
+          
+          await Purchases.enableAdServicesAttributionTokenCollection();
+        } else if (Platform.isIOS) {
+          configuration = PurchasesConfiguration("appl_VjzrIVjfeEsQXHftXmwCdBasNQK");
+          await Purchases.configure(configuration);
+        }
+      } else {
+        print('Purchases sadece Android ve iOS platformlarında desteklenir. Mevcut platform: ${Platform.operatingSystem}');
+      }
+    } catch (e) {
+      print('Purchases başlatma hatası: $e');
     }
   }
 

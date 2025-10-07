@@ -59,34 +59,35 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                               horizontal: deviceWidthSize(context, 20)),
-                          child: Column(
-                            children: [
-                              SvgPicture.asset(
-                                "assets/images/derslig-logo.svg",
-                                width: deviceWidthSize(context, 150),
-                                color: AppTheme.pink,
-                              ),
-                              Expanded(
-                                child: Image.asset(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                SvgPicture.asset(
+                                  "assets/images/derslig-logo.svg",
+                                  width: deviceWidthSize(context, 150),
+                                  color: AppTheme.pink,
+                                ),
+                                SizedBox(height: deviceHeightSize(context, 20)),
+                                Image.asset(
                                   pages[index].image,
                                   height: deviceHeightSize(context, 300),
                                   width: deviceWidthSize(context, 300),
                                 ),
-                              ),
-                              SizedBox(height: deviceHeightSize(context, 20)),
-                              Text(
-                                pages[index].title,
-                                textAlign: TextAlign.center,
-                                style: AppTheme.semiBoldTextStyle(context, 24),
-                              ),
-                              SizedBox(height: deviceHeightSize(context, 4)),
-                              Text(
-                                pages[index].description,
-                                textAlign: TextAlign.center,
-                                style: AppTheme.lightTextStyle(context, 20),
-                              ),
-                              SizedBox(height: deviceHeightSize(context, 20)),
-                            ],
+                                SizedBox(height: deviceHeightSize(context, 20)),
+                                Text(
+                                  pages[index].title,
+                                  textAlign: TextAlign.center,
+                                  style: AppTheme.semiBoldTextStyle(context, 24),
+                                ),
+                                SizedBox(height: deviceHeightSize(context, 4)),
+                                Text(
+                                  pages[index].description,
+                                  textAlign: TextAlign.center,
+                                  style: AppTheme.lightTextStyle(context, 20),
+                                ),
+                                SizedBox(height: deviceHeightSize(context, 20)),
+                              ],
+                            ),
                           ),
                         ),
                       ),
