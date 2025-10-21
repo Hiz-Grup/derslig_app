@@ -38,7 +38,8 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   webview_flutter: ^4.13.0
-
+  webview_cookie_manager:
+    path: packages/webview_cookie_manager
   get_it: ^8.0.3
   provider: ^6.0.5
   purchases_flutter: ^9.8.0

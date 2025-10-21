@@ -15,7 +15,6 @@ import 'package:derslig/views/widgets/no_internet_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 
 class SplashPage extends StatefulWidget {
@@ -44,15 +43,11 @@ class _SplashPageState extends State<SplashPage> {
     OneSignalService.init();
     SchedulerBinding.instance.addPostFrameCallback(
       (_) async {
-        GeneralResponseModel versionResponse =
-            await context.read<LoginRegisterPageProvider>().controlVersion();
+        GeneralResponseModel versionResponse = await context.read<LoginRegisterPageProvider>().controlVersion();
         if (versionResponse.success == false) {
           _showForceUpdateDialog();
         } else {
-          context
-              .read<PurchaseProvider>()
-              .initPlatformState()
-              .then((value) async {
+          context.read<PurchaseProvider>().initPlatformState().then((value) async {
             if (HiveHelpers.getOnboardingStatus() == true) {
               await context.read<LoginRegisterPageProvider>().controlUser();
               // ignore: use_build_context_synchronously
@@ -100,8 +95,7 @@ class _SplashPageState extends State<SplashPage> {
               : "https://apps.apple.com/us/app/derslig/id6451071489");
         },
         title: "Uygulama Güncellemesi",
-        content:
-            "Uygulama sürümünüz güncel değil. Lütfen uygulamanızı güncelleyiniz.",
+        content: "Uygulama sürümünüz güncel değil. Lütfen uygulamanızı güncelleyiniz.",
         buttonText: "Güncelle",
         color: AppTheme.pink,
       ),

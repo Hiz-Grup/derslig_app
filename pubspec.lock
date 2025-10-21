@@ -621,6 +621,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  webview_cookie_manager:
+    dependency: "direct main"
+    description:
+      path: "packages/webview_cookie_manager"
+      relative: true
+    source: path
+    version: "2.0.7"
   webview_flutter:
     dependency: "direct main"
     description:
