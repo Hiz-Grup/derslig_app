@@ -350,9 +350,10 @@ class _WebViewPageState extends State<WebViewPage> {
       if (read.isLogin == false && read.isTriggeredLogoutPage) {
         read.isTriggeredLogoutPage = false;
         controller.loadRequest(Uri.parse("https://www.derslig.com/giris"));
+        return NavigationDecision.prevent;
+      } else {
+        return NavigationDecision.navigate;
       }
-
-      return NavigationDecision.navigate;
     } else {
       return NavigationDecision.navigate;
     }
