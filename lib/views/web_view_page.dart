@@ -276,7 +276,7 @@ class _WebViewPageState extends State<WebViewPage> {
             print("error: ${error.description}");
           },
           onNavigationRequest: (NavigationRequest request) async {
-            print("request.url: ${request.url}");
+            log("request.url: ${request.url}");
 
             InternetConnectionChecker().hasConnection.then((isDeviceConnected) {
               if (isDeviceConnected == false) {
@@ -325,7 +325,8 @@ class _WebViewPageState extends State<WebViewPage> {
       return NavigationDecision.navigate;
     } else if (request.url == "https://www.derslig.com/pro" ||
         request.url.contains("https://www.derslig.com/siparis") ||
-        request.url.contains("https://www.derslig.com/pro")) {
+        request.url.contains("https://www.derslig.com/pro/yks") ||
+        request.url.contains("https://www.derslig.com/pro/lgs")) {
       if (context.read<LoginRegisterPageProvider>().isLogin) {
         Navigator.push(
           context,
@@ -344,10 +345,11 @@ class _WebViewPageState extends State<WebViewPage> {
       HiveHelpers.logout(context);
 
       return NavigationDecision.navigate;
-    } else if (request.url.contains("https://www.derslig.com/kurumsal") ||
-        request.url.contains("https://www.derslig.com/pro/lgs") ||
-        request.url.contains("https://www.derslig.com/pro/yks")) {
-      return NavigationDecision.prevent;
+    } else if (request.url == "https://www.derslig.com/" &&
+        context.read<LoginRegisterPageProvider>().isLogin == false) {
+      controller.loadRequest(Uri.parse("https://www.derslig.com/giris"));
+
+      return NavigationDecision.navigate;
     } else {
       return NavigationDecision.navigate;
     }
