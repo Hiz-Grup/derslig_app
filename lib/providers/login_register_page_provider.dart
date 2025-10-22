@@ -42,6 +42,13 @@ class LoginRegisterPageProvider with ChangeNotifier {
     _loginRoute = value;
   }
 
+  bool _isTriggeredLogoutPage = false;
+  bool get isTriggeredLogoutPage => _isTriggeredLogoutPage;
+  set isTriggeredLogoutPage(value) {
+    _isTriggeredLogoutPage = value;
+    notifyListeners();
+  }
+
   bool _isLogin = false;
   bool get isLogin => _isLogin;
   set isLogin(value) {

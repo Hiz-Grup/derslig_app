@@ -56,4 +56,5 @@ class HiveHelpers {
       return null;
     }
   }
+
 }

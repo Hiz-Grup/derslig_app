@@ -7,21 +7,28 @@ import 'package:derslig/views/login_page.dart';
 import 'package:derslig/views/onboarding_page.dart';
 import 'package:derslig/views/register_page.dart';
 import 'package:derslig/views/splash_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
+// ignore: depend_on_referenced_packages
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.transparent,
+  ));
   setupLocator();
 
-  // WebView platform implementasyonunu başlat
   if (Platform.isIOS) {
     WebViewPlatform.instance = WebKitWebViewPlatform();
-  } else if (Platform.isWindows) {
   }
 
   await Hive.initFlutter();
@@ -35,7 +42,9 @@ void main() async {
     try {
       await OneSignalService.init();
     } catch (e) {
-      print('OneSignal başlatma hatası: $e');
+      if (kDebugMode) {
+        print('OneSignal başlatma hatası: $e');
+      }
     }
   }
 

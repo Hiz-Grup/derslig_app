@@ -343,11 +343,14 @@ class _WebViewPageState extends State<WebViewPage> {
       }
     } else if (request.url.contains("https://www.derslig.com/cikis")) {
       HiveHelpers.logout(context);
-
+      context.read<LoginRegisterPageProvider>().isTriggeredLogoutPage = true;
       return NavigationDecision.navigate;
-    } else if (request.url == "https://www.derslig.com/" &&
-        context.read<LoginRegisterPageProvider>().isLogin == false) {
-      controller.loadRequest(Uri.parse("https://www.derslig.com/giris"));
+    } else if (request.url == "https://www.derslig.com/") {
+      final read = context.read<LoginRegisterPageProvider>();
+      if (read.isLogin == false && read.isTriggeredLogoutPage) {
+        read.isTriggeredLogoutPage = false;
+        controller.loadRequest(Uri.parse("https://www.derslig.com/giris"));
+      }
 
       return NavigationDecision.navigate;
     } else {
