@@ -3,9 +3,7 @@ import 'package:derslig/helper/locator.dart';
 import 'package:derslig/helper/provider_list.dart';
 import 'package:derslig/services/one_signal_service.dart';
 import 'package:derslig/views/home_page.dart';
-import 'package:derslig/views/login_page.dart';
 import 'package:derslig/views/onboarding_page.dart';
-import 'package:derslig/views/register_page.dart';
 import 'package:derslig/views/splash_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -70,8 +68,6 @@ class MyApp extends StatelessWidget {
         HomePage.routeName: (context) => const HomePage(),
         SplashPage.routeName: (context) => const SplashPage(),
         OnboardingPage.routeName: (context) => const OnboardingPage(),
-        LoginPage.routeName: (context) => const LoginPage(),
-        RegisterPage.routeName: (context) => const RegisterPage(),
       },
       initialRoute: SplashPage.routeName,
     );

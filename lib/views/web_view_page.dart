@@ -134,11 +134,10 @@ class _WebViewPageState extends State<WebViewPage> {
 
     setPages(context);
     return PopScope(
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (await controller.canGoBack()) {
           controller.goBack();
-        } else {
-          SystemNavigator.pop();
         }
       },
       child: Scaffold(
@@ -146,25 +145,28 @@ class _WebViewPageState extends State<WebViewPage> {
         bottomNavigationBar: context.watch<LoginRegisterPageProvider>().isLogin && deviceHeight(context) > 500
             ? bottomNavigation()
             : null,
-        body: Stack(
-          children: [
-            Column(
-              children: [
-                Container(height: deviceTopPadding(context), color: AppTheme.blue),
-                Expanded(
-                  child: WebViewWidget(
-                    controller: controller,
+        body: SafeArea(
+          top: false,
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Container(height: deviceTopPadding(context), color: AppTheme.blue),
+                  Expanded(
+                    child: WebViewWidget(
+                      controller: controller,
+                    ),
+                  ),
+                ],
+              ),
+              if (context.watch<LoginRegisterPageProvider>().isLoading)
+                const Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.pink,
                   ),
                 ),
-              ],
-            ),
-            if (context.watch<LoginRegisterPageProvider>().isLoading)
-              const Center(
-                child: CircularProgressIndicator(
-                  color: AppTheme.pink,
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
