@@ -22,7 +22,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 version: 1.6.4+33
 
 environment:
-  sdk: ">=2.18.2 <3.0.0"
+    sdk: ">=2.18.2 <3.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -31,88 +31,87 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  flutter:
-    sdk: flutter
+    flutter:
+        sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.2
-  webview_flutter: ^4.13.0
-  webview_cookie_manager:
-    path: packages/webview_cookie_manager
-  get_it: ^8.0.3
-  provider: ^6.0.5
-  purchases_flutter: ^9.8.0
-  hive_flutter: ^1.1.0
-  flutter_svg: ^2.0.7
-  in_app_purchase: ^3.2.3
-  http: ^1.1.0
-  fluttertoast: ^8.2.2
-  package_info_plus: ^8.0.0
-  internet_connection_checker: ^1.0.0+1
-  connectivity_plus: ^6.1.4
-  app_tracking_transparency: ^2.0.4
-  webview_flutter_android: ^4.7.0
-  webview_flutter_wkwebview: ^3.7.4
-  onesignal_flutter: ^5.3.4
-  url_launcher: ^6.3.2
+    # The following adds the Cupertino Icons font to your application.
+    # Use with the CupertinoIcons class for iOS style icons.
+    cupertino_icons: ^1.0.2
+    webview_flutter: ^4.13.0
+    webview_cookie_manager:
+        path: packages/webview_cookie_manager
+    get_it: ^8.0.3
+    provider: ^6.0.5
+    purchases_flutter: ^9.8.0
+    hive_flutter: ^1.1.0
+    flutter_svg: ^2.0.7
+    http: ^1.1.0
+    fluttertoast: ^8.2.2
+    package_info_plus: ^8.0.0
+    internet_connection_checker: ^1.0.0+1
+    connectivity_plus: ^6.1.4
+    app_tracking_transparency: ^2.0.4
+    webview_flutter_android: ^4.7.0
+    webview_flutter_wkwebview: ^3.7.4
+    onesignal_flutter: ^5.3.4
+    url_launcher: ^6.3.2
 
 #dependency_overrides:
 #  win32: ^5.5.4
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
+    flutter_test:
+        sdk: flutter
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+    # The "flutter_lints" package below contains a set of recommended lints to
+    # encourage good coding practices. The lint set provided by the package is
+    # activated in the `analysis_options.yaml` file located at the root of your
+    # package. See that file for information about deactivating specific lint
+    # rules and activating additional ones.
+    flutter_lints: ^2.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
-  uses-material-design: true
+    # The following line ensures that the Material Icons font is
+    # included with your application, so that you can use the icons in
+    # the material Icons class.
+    uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  assets:
-    - assets/images/
-  #   - images/a_dot_ham.jpeg
+    # To add assets to your application, add an assets section, like this:
+    assets:
+        - assets/images/
+    #   - images/a_dot_ham.jpeg
 
-  # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.dev/assets-and-images/#resolution-aware
+    # An image asset can refer to one or more resolution-specific "variants", see
+    # https://flutter.dev/assets-and-images/#resolution-aware
 
-  # For details regarding adding assets from package dependencies, see
-  # https://flutter.dev/assets-and-images/#from-packages
+    # For details regarding adding assets from package dependencies, see
+    # https://flutter.dev/assets-and-images/#from-packages
 
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  fonts:
-    - family: Nunito
-      fonts:
-        - asset: assets/fonts/Nunito-Regular.ttf
-        - asset: assets/fonts/Nunito-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Nunito-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Nunito-Light.ttf
-          weight: 300
-        - asset: assets/fonts/Nunito-Medium.ttf
-          weight: 500
+    # To add custom fonts to your application, add a fonts section here,
+    # in this "flutter" section. Each entry in this list should have a
+    # "family" key with the font family name, and a "fonts" key with a
+    # list giving the asset and other descriptors for the font. For
+    # example:
+    fonts:
+        - family: Nunito
+          fonts:
+              - asset: assets/fonts/Nunito-Regular.ttf
+              - asset: assets/fonts/Nunito-Bold.ttf
+                weight: 700
+              - asset: assets/fonts/Nunito-SemiBold.ttf
+                weight: 600
+              - asset: assets/fonts/Nunito-Light.ttf
+                weight: 300
+              - asset: assets/fonts/Nunito-Medium.ttf
+                weight: 500
 
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/custom-fonts/#from-packages
+    #
+    # For details regarding fonts from package dependencies,
+    # see https://flutter.dev/custom-fonts/#from-packages
 dart_format:
-  line_length: 80 # Bu satırı kendi tercihinize göre değiştirebilirsiniz (opsiyonel)
-  indent: 4 # Girinti için 4 boşluk kullan
+    line_length: 80 # Bu satırı kendi tercihinize göre değiştirebilirsiniz (opsiyonel)
+    indent: 4 # Girinti için 4 boşluk kullan

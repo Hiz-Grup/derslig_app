@@ -2,10 +2,8 @@ import 'dart:io';
 
 import 'package:derslig/controller/purchase_controller.dart';
 import 'package:derslig/helper/locator.dart';
-import 'package:derslig/helper/url_launcher_helper.dart';
 import 'package:derslig/models/general_response_model.dart';
 import 'package:flutter/material.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 enum BuyState { idle, busy }
@@ -14,10 +12,10 @@ class PurchaseProvider with ChangeNotifier {
   final _purchaseController = locator<PurchaseController>();
   BuyState buyState = BuyState.idle;
 
-  List<ProductDetails> products = [];
+  List<Package> packages = [];
+  Offering? currentOffering;
 
   int selectedPollenIndex = 1;
-  int checkCount = 0;
 
   void selectPollen(int index) {
     selectedPollenIndex = index;
@@ -32,9 +30,7 @@ class PurchaseProvider with ChangeNotifier {
         PurchasesConfiguration? configuration;
         if (Platform.isAndroid) {
           configuration = PurchasesConfiguration("goog_wRHmEaOoDcFcIIYldGLpguNccvC");
-
           await Purchases.configure(configuration);
-
           await Purchases.enableAdServicesAttributionTokenCollection();
         } else if (Platform.isIOS) {
           configuration = PurchasesConfiguration("appl_VjzrIVjfeEsQXHftXmwCdBasNQK");
@@ -49,90 +45,54 @@ class PurchaseProvider with ChangeNotifier {
     }
   }
 
-  // Future<GeneralResponseModel> buyPollen(PolenEkleModel polenEkleModel) async {
-  //   GeneralResponseModel responseModel =
-  //       await _purchaseController.buyPollen(polenEkleModel);
-  //   await getActivePolen(
-  //       polenEkleModel.userEmail ?? HiveHelpers().getUserEmail());
-  //   buyState = BuyState.idle;
-  //   return responseModel;
-  // }
-
-  getProductDetails(BuildContext context) async {
-    Set<String> _kIds = Platform.isIOS
-        ? <String>{
-            '1aylikdersligpro',
-            '3aylikdersligpro',
-            '6aylikdersligpro',
-            '12aylikdersligpro',
-          }
-        : <String>{
-            '1aylikdersligpro_android',
-            '3aylikdersligpro_android',
-            '6aylikdersligpro_android',
-            '12aylikdersligpro_android',
-          };
-    List<String> _kIdsForSort = Platform.isIOS
-        ? [
-            '1aylikdersligpro',
-            '3aylikdersligpro',
-            '6aylikdersligpro',
-            '12aylikdersligpro',
-          ]
-        : [
-            '1aylikdersligpro_android',
-            '3aylikdersligpro_android',
-            '6aylikdersligpro_android',
-            '12aylikdersligpro_android',
-          ];
-
+  Future<void> getProductDetails(BuildContext context) async {
     try {
-      final bool isStoreAvailable = await InAppPurchase.instance.isAvailable();
-      if (!isStoreAvailable && Platform.isAndroid) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Güncelleme Gerekli'),
-            content: Text('In-app satın almalar için Google Play Store\'u güncellemeniz gerekiyor.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  // Play Store'u açın
-                  UrlLauncherHelper().launch('market://details?id=com.android.vending');
-                },
-                child: Text('Güncelle'),
-              ),
-            ],
-          ),
-        );
-        return;
-      }
-      final ProductDetailsResponse response = await InAppPurchase.instance.queryProductDetails(_kIds);
-      if (response.notFoundIDs.isNotEmpty) {
-        // Handle the error.
-        print('notFoundIDs: ${response.notFoundIDs}');
-      }
+      Offerings offerings = await Purchases.getOfferings();
 
-      if (response.notFoundIDs.isNotEmpty && checkCount < 3) {
-        Future.delayed(const Duration(seconds: 1), () {
-          getProductDetails(context);
-          checkCount++;
+      if (offerings.current != null && offerings.current!.availablePackages.isNotEmpty) {
+        currentOffering = offerings.current;
+        packages = offerings.current!.availablePackages;
+
+        packages.sort((a, b) {
+          String aId = a.storeProduct.identifier.toLowerCase();
+          String bId = b.storeProduct.identifier.toLowerCase();
+
+          int aMonths = _extractMonthsFromId(aId);
+          int bMonths = _extractMonthsFromId(bId);
+
+          return aMonths.compareTo(bMonths);
         });
+
+        notifyListeners();
+      } else {
+        print('RevenueCat: Mevcut teklif bulunamadı');
       }
-      products = response.productDetails;
-
-      //sort
-      products.sort((a, b) => _kIdsForSort.indexOf(a.id).compareTo(_kIdsForSort.indexOf(b.id)));
-
-      notifyListeners();
     } catch (e) {
-      print("Ürün detayları alınırken hata: $e");
+      print('RevenueCat: Ürün detayları alınırken hata: $e');
     }
+  }
+
+  int _extractMonthsFromId(String id) {
+    if (id.contains('1aylik')) return 1;
+    if (id.contains('3aylik')) return 3;
+    if (id.contains('6aylik')) return 6;
+    if (id.contains('12aylik')) return 12;
+    return 0;
   }
 
   setBuyState(BuyState state) {
     buyState = state;
     notifyListeners();
+  }
+
+  Future<CustomerInfo?> purchasePackage(Package package) async {
+    try {
+      PurchaseResult result = await Purchases.purchasePackage(package);
+      return result.customerInfo;
+    } catch (e) {
+      print('RevenueCat: Satın alma hatası: $e');
+      return null;
+    }
   }
 
   Future<GeneralResponseModel> buyProduct({
@@ -155,5 +115,25 @@ class PurchaseProvider with ChangeNotifier {
       xsrfToken: xsrfToken,
       dersligCookie: dersligCookie,
     );
+  }
+
+  Future<CustomerInfo?> getCustomerInfo() async {
+    try {
+      CustomerInfo customerInfo = await Purchases.getCustomerInfo();
+      return customerInfo;
+    } catch (e) {
+      print('RevenueCat: Kullanıcı bilgileri alınırken hata: $e');
+      return null;
+    }
+  }
+
+  Future<CustomerInfo?> restorePurchases() async {
+    try {
+      CustomerInfo customerInfo = await Purchases.restorePurchases();
+      return customerInfo;
+    } catch (e) {
+      print('RevenueCat: Satın almalar geri yüklenirken hata: $e');
+      return null;
+    }
   }
 }
