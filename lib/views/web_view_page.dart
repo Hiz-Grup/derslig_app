@@ -265,13 +265,14 @@ class _WebViewPageState extends State<WebViewPage> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (int progress) {
-            // Update loading bar.
+            print("progress: $progress");
+            context.read<LoginRegisterPageProvider>().isLoading = progress != 100;
           },
           onPageStarted: (String url) {
             // print("onPageStarted: $url");
           },
           onPageFinished: (String url) {
-            context.read<LoginRegisterPageProvider>().isLoading = false;
+            print("isLoading setted false : $url");
           },
           onWebResourceError: (WebResourceError error) async {
             // Handle error.
@@ -294,6 +295,7 @@ class _WebViewPageState extends State<WebViewPage> {
               }
             });
             context.read<LoginRegisterPageProvider>().isLoading = true;
+            print("isLoading setted true : $url");
             setState(() {
               url = request.url;
             });

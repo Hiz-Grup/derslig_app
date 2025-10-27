@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:derslig/controller/purchase_controller.dart';
 import 'package:derslig/helper/locator.dart';
+import 'package:derslig/helper/url_launcher_helper.dart';
 import 'package:derslig/models/general_response_model.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -31,16 +32,17 @@ class PurchaseProvider with ChangeNotifier {
         PurchasesConfiguration? configuration;
         if (Platform.isAndroid) {
           configuration = PurchasesConfiguration("goog_wRHmEaOoDcFcIIYldGLpguNccvC");
-          
+
           await Purchases.configure(configuration);
-          
+
           await Purchases.enableAdServicesAttributionTokenCollection();
         } else if (Platform.isIOS) {
           configuration = PurchasesConfiguration("appl_VjzrIVjfeEsQXHftXmwCdBasNQK");
           await Purchases.configure(configuration);
         }
       } else {
-        print('Purchases sadece Android ve iOS platformlarında desteklenir. Mevcut platform: ${Platform.operatingSystem}');
+        print(
+            'Purchases sadece Android ve iOS platformlarında desteklenir. Mevcut platform: ${Platform.operatingSystem}');
       }
     } catch (e) {
       print('Purchases başlatma hatası: $e');
@@ -56,7 +58,7 @@ class PurchaseProvider with ChangeNotifier {
   //   return responseModel;
   // }
 
-  getProductDetails() async {
+  getProductDetails(BuildContext context) async {
     Set<String> _kIds = Platform.isIOS
         ? <String>{
             '1aylikdersligpro',
@@ -83,10 +85,29 @@ class PurchaseProvider with ChangeNotifier {
             '6aylikdersligpro_android',
             '12aylikdersligpro_android',
           ];
-          
+
     try {
-      final ProductDetailsResponse response =
-          await InAppPurchase.instance.queryProductDetails(_kIds);
+      final bool isStoreAvailable = await InAppPurchase.instance.isAvailable();
+      if (!isStoreAvailable && Platform.isAndroid) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Güncelleme Gerekli'),
+            content: Text('In-app satın almalar için Google Play Store\'u güncellemeniz gerekiyor.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  // Play Store'u açın
+                  UrlLauncherHelper().launch('market://details?id=com.android.vending');
+                },
+                child: Text('Güncelle'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+      final ProductDetailsResponse response = await InAppPurchase.instance.queryProductDetails(_kIds);
       if (response.notFoundIDs.isNotEmpty) {
         // Handle the error.
         print('notFoundIDs: ${response.notFoundIDs}');
@@ -94,15 +115,14 @@ class PurchaseProvider with ChangeNotifier {
 
       if (response.notFoundIDs.isNotEmpty && checkCount < 3) {
         Future.delayed(const Duration(seconds: 1), () {
-          getProductDetails();
+          getProductDetails(context);
           checkCount++;
         });
       }
       products = response.productDetails;
 
       //sort
-      products.sort((a, b) =>
-          _kIdsForSort.indexOf(a.id).compareTo(_kIdsForSort.indexOf(b.id)));
+      products.sort((a, b) => _kIdsForSort.indexOf(a.id).compareTo(_kIdsForSort.indexOf(b.id)));
 
       notifyListeners();
     } catch (e) {

@@ -27,7 +27,7 @@ class _DersligProPageState extends State<DersligProPage> {
   @override
   void initState() {
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      context.read<PurchaseProvider>().getProductDetails();
+      context.read<PurchaseProvider>().getProductDetails(context);
       final Stream purchaseUpdated = InAppPurchase.instance.purchaseStream;
       _subscription = purchaseUpdated.listen((purchaseDetailsList) {
         _listenToPurchaseUpdated(purchaseDetailsList);
@@ -56,8 +56,7 @@ class _DersligProPageState extends State<DersligProPage> {
         if (purchaseDetails.status == PurchaseStatus.error) {
           print('error: ${purchaseDetails.error?.message}');
           ToastWidgets.errorToast(
-              context,
-              "Satın alma işlemi başarısız oldu. ${purchaseDetails.error?.message ?? 'Bilinmeyen hata'}");
+              context, "Satın alma işlemi başarısız oldu. ${purchaseDetails.error?.message ?? 'Bilinmeyen hata'}");
           context.read<PurchaseProvider>().setBuyState(BuyState.idle);
         } else if (purchaseDetails.status == PurchaseStatus.purchased ||
             purchaseDetails.status == PurchaseStatus.restored) {
@@ -106,17 +105,14 @@ class _DersligProPageState extends State<DersligProPage> {
   }
 
   buyProduct() async {
-    int selectedPollenIndex =
-        context.read<PurchaseProvider>().selectedPollenIndex;
+    int selectedPollenIndex = context.read<PurchaseProvider>().selectedPollenIndex;
 
     final ProductDetails productDetails =
-        context.read<PurchaseProvider>().products[
-            selectedPollenIndex]; // Saved earlier from queryProductDetails().
+        context.read<PurchaseProvider>().products[selectedPollenIndex]; // Saved earlier from queryProductDetails().
 
     try {
-      final PurchaseParam purchaseParam =
-          PurchaseParam(productDetails: productDetails);
-      
+      final PurchaseParam purchaseParam = PurchaseParam(productDetails: productDetails);
+
       // Google Play Billing Library 7.0.0 ile uyumlu satın alma
       InAppPurchase.instance.buyConsumable(purchaseParam: purchaseParam);
     } catch (e) {
@@ -162,8 +158,7 @@ class _DersligProPageState extends State<DersligProPage> {
                     child: Text(
                       "Derslig Pro ile Başarını Yükselt!",
                       textAlign: TextAlign.center,
-                      style: AppTheme.blackTextStyle(context, 30,
-                          color: AppTheme.black),
+                      style: AppTheme.blackTextStyle(context, 30, color: AppTheme.black),
                     ),
                   ),
                   ...List.generate(
@@ -175,8 +170,7 @@ class _DersligProPageState extends State<DersligProPage> {
                       ),
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        border:
-                            Border.all(color: AppTheme.grey.withOpacity(0.3)),
+                        border: Border.all(color: AppTheme.grey.withOpacity(0.3)),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: AppTheme.shadowList,
                         color: AppTheme.white,
@@ -186,64 +180,49 @@ class _DersligProPageState extends State<DersligProPage> {
                         children: [
                           Text(
                             _products[index].title,
-                            style: AppTheme.boldTextStyle(context, 16,
-                                color: AppTheme.grey),
+                            style: AppTheme.boldTextStyle(context, 16, color: AppTheme.grey),
                           ),
                           SizedBox(
                             height: deviceHeightSize(context, 20),
                           ),
                           Text(
                             _products[index].price,
-                            style: AppTheme.blackTextStyle(context, 32,
-                                color: AppTheme.blue),
+                            style: AppTheme.blackTextStyle(context, 32, color: AppTheme.blue),
                           ),
                           SizedBox(
                             height: deviceHeightSize(context, 10),
                           ),
                           MaterialButton(
                             onPressed: () async {
-                              if (context.read<PurchaseProvider>().buyState ==
-                                  BuyState.busy) {
+                              if (context.read<PurchaseProvider>().buyState == BuyState.busy) {
                                 return;
                               }
 
-                              final LoadingDialog loadingDialog =
-                                  LoadingDialog(context);
+                              final LoadingDialog loadingDialog = LoadingDialog(context);
                               loadingDialog.show();
-                              context
-                                  .read<PurchaseProvider>()
-                                  .setBuyState(BuyState.busy);
+                              context.read<PurchaseProvider>().setBuyState(BuyState.busy);
                               try {
                                 await context
                                     .read<PurchaseProvider>()
                                     .checkUser(
-                                        xsrfToken: HiveHelpers.getLoginModel()!
-                                            .xsrfToken,
-                                        dersligCookie:
-                                            HiveHelpers.getLoginModel()!
-                                                .dersligCookie)
+                                        xsrfToken: HiveHelpers.getLoginModel()!.xsrfToken,
+                                        dersligCookie: HiveHelpers.getLoginModel()!.dersligCookie)
                                     .then((value) {
                                   if (value.success == true) {
-                                    context
-                                        .read<PurchaseProvider>()
-                                        .selectedPollenIndex = index;
+                                    context.read<PurchaseProvider>().selectedPollenIndex = index;
                                     buyProduct();
                                   } else {
-                                    ToastWidgets.errorToast(
-                                        context, value.message);
+                                    ToastWidgets.errorToast(context, value.message);
                                   }
                                   loadingDialog.dismiss();
-                                  context
-                                      .read<PurchaseProvider>()
-                                      .setBuyState(BuyState.idle);
+                                  context.read<PurchaseProvider>().setBuyState(BuyState.idle);
                                 });
                               } catch (e) {
                                 print("Kullanıcı kontrolü sırasında hata: $e");
                                 loadingDialog.dismiss();
-                                context
-                                    .read<PurchaseProvider>()
-                                    .setBuyState(BuyState.idle);
-                                ToastWidgets.errorToast(context, "Kullanıcı kontrolü başarısız oldu. Lütfen tekrar deneyin.");
+                                context.read<PurchaseProvider>().setBuyState(BuyState.idle);
+                                ToastWidgets.errorToast(
+                                    context, "Kullanıcı kontrolü başarısız oldu. Lütfen tekrar deneyin.");
                               }
                             },
                             color: AppTheme.pink,
@@ -256,8 +235,7 @@ class _DersligProPageState extends State<DersligProPage> {
                             ),
                             child: Text(
                               "Satın Al",
-                              style: AppTheme.boldTextStyle(context, 16,
-                                  color: AppTheme.white),
+                              style: AppTheme.boldTextStyle(context, 16, color: AppTheme.white),
                             ),
                           ),
                         ],
