@@ -133,6 +133,7 @@ class _WebViewPageState extends State<WebViewPage> {
     }
 
     setPages(context);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -141,6 +142,7 @@ class _WebViewPageState extends State<WebViewPage> {
         }
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.white,
         bottomNavigationBar: context.watch<LoginRegisterPageProvider>().isLogin && deviceHeight(context) > 500
             ? bottomNavigation()
@@ -149,15 +151,27 @@ class _WebViewPageState extends State<WebViewPage> {
           top: false,
           child: Stack(
             children: [
-              Column(
-                children: [
-                  Container(height: deviceTopPadding(context), color: AppTheme.blue),
-                  Expanded(
-                    child: WebViewWidget(
-                      controller: controller,
+              SingleChildScrollView(
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: deviceHeight(context) - MediaQuery.of(context).padding.bottom,
+                      child: Column(
+                        children: [
+                          Container(height: deviceTopPadding(context), color: AppTheme.blue),
+                          Expanded(
+                            child: WebViewWidget(
+                              controller: controller,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    SizedBox(
+                      height: MediaQuery.of(context).viewInsets.bottom,
+                    )
+                  ],
+                ),
               ),
               if (context.watch<LoginRegisterPageProvider>().isLoading)
                 const Center(
