@@ -155,7 +155,7 @@ class _WebViewPageState extends State<WebViewPage> {
                 child: Column(
                   children: [
                     SizedBox(
-                      height: deviceHeight(context) - MediaQuery.of(context).padding.bottom,
+                      height: deviceHeight(context) - MediaQuery.of(context).viewInsets.bottom,
                       child: Column(
                         children: [
                           Container(height: deviceTopPadding(context), color: AppTheme.blue),
