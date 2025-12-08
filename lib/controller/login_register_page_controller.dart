@@ -7,21 +7,30 @@ import 'package:derslig/models/general_response_model.dart';
 import 'package:derslig/models/login_response_model.dart';
 import 'package:derslig/models/user_model.dart';
 import 'package:derslig/services/api_service.dart';
+import 'package:derslig/services/logger_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class LoginRegisterPageController {
   final _apiService = locator<ApiService>();
+  final _logger = LoggerService.instance;
 
   Future<LoginResponseModel?> login(String email, String password) async {
     try {
-      LoginResponseModel loginResponseModel =
-          await _apiService.login(email, password);
+      LoginResponseModel loginResponseModel = await _apiService.login(email, password);
 
       HiveHelpers.saveLoginModel(loginResponseModel);
       HiveHelpers.saveUserStatus(true);
+
+      _logger.addBreadcrumb('Kullanıcı giriş yaptı', category: 'auth');
+
       return loginResponseModel;
-    } catch (e) {
-      print("LOGİN ERROR : " + e.toString());
+    } catch (e, stackTrace) {
+      _logger.logError(
+        'Login hatası',
+        error: e,
+        stackTrace: stackTrace,
+        context: {'email': email},
+      );
       return null;
     }
   }
@@ -56,7 +65,12 @@ class LoginRegisterPageController {
         message: "Uygulama Güncel",
         success: true,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      _logger.logError(
+        'Versiyon kontrol hatası',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return GeneralResponseModel(
         message: "Uygulama Güncel",
         success: true,
@@ -69,25 +83,31 @@ class LoginRegisterPageController {
     required String dersligCookie,
   }) async {
     try {
-      print("xsrfToken: $xsrfToken");
+      _logger.debugLog('User API kontrol başlatıldı');
 
       final response = await _apiService.getRequest(
         "https://www.derslig.com/api/user",
         headers: {
-          "Cookie": "XSRF-TOKEN=" +
-              xsrfToken +
-              "; derslig_cookie=" +
-              dersligCookie +
-              ";",
+          "Cookie": "XSRF-TOKEN=$xsrfToken; derslig_cookie=$dersligCookie;",
         },
       );
 
-      UserModel userModel =
-          UserModel.fromJson(json.decode(response.body)["data"]);
+      UserModel userModel = UserModel.fromJson(json.decode(response.body)["data"]);
       HiveHelpers.saveUserModel(userModel);
 
+      _logger.setUser(
+        userId: userModel.id?.toString(),
+        email: userModel.email,
+        username: userModel.name,
+      );
+
       return userModel;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      _logger.logError(
+        'User API kontrol hatası',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return UserModel();
     }
   }

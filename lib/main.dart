@@ -1,6 +1,10 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/helper/locator.dart';
 import 'package:derslig/helper/provider_list.dart';
+import 'package:derslig/services/logger_service.dart';
 import 'package:derslig/services/one_signal_service.dart';
 import 'package:derslig/views/home_page.dart';
 import 'package:derslig/views/onboarding_page.dart';
@@ -13,16 +17,43 @@ import 'package:provider/provider.dart';
 // ignore: depend_on_referenced_packages
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
-import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await LoggerService.init(
+    appRunner: () async {
+      await _initializeApp();
+
+      FlutterError.onError = (FlutterErrorDetails details) {
+        LoggerService.instance.captureFlutterError(details);
+      };
+
+      PlatformDispatcher.instance.onError = (error, stack) {
+        LoggerService.instance.logError(
+          'Platform Error',
+          error: error,
+          stackTrace: stack,
+        );
+        return true;
+      };
+
+      runApp(MultiProvider(
+        providers: providers,
+        child: const MyApp(),
+      ));
+    },
+  );
+}
+
+Future<void> _initializeApp() async {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     systemNavigationBarColor: Colors.transparent,
   ));
+
   setupLocator();
 
   if (Platform.isIOS) {
@@ -39,17 +70,19 @@ void main() async {
   if (Platform.isAndroid || Platform.isIOS) {
     try {
       await OneSignalService.init();
-    } catch (e) {
-      if (kDebugMode) {
-        print('OneSignal başlatma hatası: $e');
-      }
+    } catch (e, stackTrace) {
+      LoggerService.instance.logError(
+        'OneSignal başlatma hatası',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
-  runApp(MultiProvider(
-    providers: providers,
-    child: const MyApp(),
-  ));
+  LoggerService.instance.addBreadcrumb(
+    'Uygulama başlatıldı',
+    category: 'app.lifecycle',
+  );
 }
 
 class MyApp extends StatelessWidget {
