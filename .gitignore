@@ -135,3 +135,5 @@ macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_*.png # Generated icons
 
 # VS Code
 .vscode/
+
+sentry.properties

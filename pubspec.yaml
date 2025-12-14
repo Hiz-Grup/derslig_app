@@ -55,12 +55,13 @@ dependencies:
     webview_flutter_wkwebview: ^3.7.4
     onesignal_flutter: ^5.3.4
     url_launcher: ^6.3.2
-    sentry_flutter: ^8.10.1
+    sentry_flutter: ^9.8.0
 
 #dependency_overrides:
 #  win32: ^5.5.4
 
 dev_dependencies:
+    sentry_dart_plugin: ^3.2.0
     flutter_test:
         sdk: flutter
 
@@ -116,3 +117,9 @@ flutter:
 dart_format:
     line_length: 80 # Bu satırı kendi tercihinize göre değiştirebilirsiniz (opsiyonel)
     indent: 4 # Girinti için 4 boşluk kullan
+
+sentry:
+    upload_debug_symbols: true
+    upload_source_maps: true
+    project: flutter
+    org: appnify

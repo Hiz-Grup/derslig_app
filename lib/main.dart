@@ -39,9 +39,11 @@ void main() async {
         return true;
       };
 
-      runApp(MultiProvider(
-        providers: providers,
-        child: const MyApp(),
+      runApp(SentryWidget(
+        child: MultiProvider(
+          providers: providers,
+          child: const MyApp(),
+        ),
       ));
     },
   );
@@ -98,6 +100,9 @@ class MyApp extends StatelessWidget {
         fontFamily: AppTheme.appFontFamily,
       ),
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [
+        SentryNavigatorObserver(),
+      ],
       routes: {
         HomePage.routeName: (context) => const HomePage(),
         SplashPage.routeName: (context) => const SplashPage(),

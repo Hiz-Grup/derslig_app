@@ -17,18 +17,48 @@ class LoggerService {
   LoggerService._internal();
 
   static const String sentryDsn =
-      'https://b60f2360ecc3b3ce7617e70d98649266@o293205.ingest.us.sentry.io/4510466267217920';
+      'https://c9f2d8f476d099530d6a1093886e84fc@o293205.ingest.us.sentry.io/4510511197650944';
 
   static Future<void> init({required Future<void> Function() appRunner}) async {
     await SentryFlutter.init(
       (options) {
         options.dsn = sentryDsn;
-        options.debug = kDebugMode;
-        options.tracesSampleRate = kDebugMode ? 1.0 : 0.5;
+        options.debug = true;
+        options.diagnosticLevel = SentryLevel.info;
+
+        options.enableAutoSessionTracking = true;
         options.autoSessionTrackingInterval = const Duration(milliseconds: 30000);
-        options.attachScreenshot = true;
+
+        options.sampleRate = 1.0;
+        options.tracesSampleRate = 1.0;
+
         options.attachViewHierarchy = true;
+
         options.environment = kDebugMode ? 'development' : 'production';
+
+        options.sendDefaultPii = true;
+        options.enableAutoNativeBreadcrumbs = true;
+        options.enableAutoPerformanceTracing = true;
+
+        options.attachScreenshot = false;
+
+        options.beforeSend = (event, hint) {
+          debugPrint('🚀 [Sentry] Event gönderiliyor: ${event.eventId}');
+          debugPrint('   Type: ${event.type}');
+          debugPrint('   Level: ${event.level}');
+          debugPrint('   Message: ${event.message?.formatted}');
+          if (event.exceptions != null && event.exceptions!.isNotEmpty) {
+            debugPrint('   Exception: ${event.exceptions?.first.value}');
+          }
+          return event;
+        };
+
+        options.beforeBreadcrumb = (breadcrumb, hint) {
+          if (kDebugMode) {
+            debugPrint('🍞 [Sentry] Breadcrumb: ${breadcrumb?.message}');
+          }
+          return breadcrumb;
+        };
       },
       appRunner: appRunner,
     );
@@ -291,4 +321,56 @@ class LoggerService {
       debugPrint('   Error: $error');
     }
   }
+
+  Future<SentryId?> testSentryIntegration() async {
+    // ignore: avoid_print
+    print('🔄 [Sentry] Test başlatılıyor...');
+    // ignore: avoid_print
+    print('   DSN: ${sentryDsn.substring(0, 50)}...');
+    // ignore: avoid_print
+    print('   Environment: ${kDebugMode ? 'development' : 'production'}');
+    // ignore: avoid_print
+    print('   Sentry Enabled: ${Sentry.isEnabled}');
+
+    if (!Sentry.isEnabled) {
+      // ignore: avoid_print
+      print('❌ [Sentry] SDK etkin değil! DSN kontrol edin.');
+      return null;
+    }
+
+    try {
+      final sentryId = await Sentry.captureException(
+        Exception('Sentry Test - ${DateTime.now().toIso8601String()}'),
+        stackTrace: StackTrace.current,
+        withScope: (scope) {
+          scope.setTag('test', 'true');
+          scope.setTag('source', 'flutter_app');
+          scope.setContexts('test_info', {
+            'timestamp': DateTime.now().toIso8601String(),
+            'environment': kDebugMode ? 'development' : 'production',
+            'platform': 'flutter',
+          });
+        },
+      );
+
+
+
+      // ignore: avoid_print
+      print('✅ [Sentry] Test başarılı!');
+      // ignore: avoid_print
+      print('   Event ID: $sentryId');
+      // ignore: avoid_print
+      print('   Dashboard\'da bu ID\'yi arayın: $sentryId');
+
+      return sentryId;
+    } catch (e, stack) {
+      // ignore: avoid_print
+      print('❌ [Sentry] Test başarısız: $e');
+      // ignore: avoid_print
+      print('   Stack: $stack');
+      return null;
+    }
+  }
+
+  static bool get isEnabled => Sentry.isEnabled;
 }

@@ -6,6 +6,8 @@ PODS:
   - Flutter (1.0.0)
   - fluttertoast (0.0.2):
     - Flutter
+  - objective_c (0.0.1):
+    - Flutter
   - onesignal_flutter (5.3.4):
     - Flutter
     - OneSignalXCFramework (= 5.2.14)
@@ -66,11 +68,11 @@ PODS:
   - PurchasesHybridCommon (17.10.0):
     - RevenueCat (= 5.43.0)
   - RevenueCat (5.43.0)
-  - Sentry/HybridSDK (8.46.0)
-  - sentry_flutter (8.14.2):
+  - Sentry/HybridSDK (8.56.2)
+  - sentry_flutter (9.8.0):
     - Flutter
     - FlutterMacOS
-    - Sentry/HybridSDK (= 8.46.0)
+    - Sentry/HybridSDK (= 8.56.2)
   - url_launcher_ios (0.0.1):
     - Flutter
   - webview_cookie_manager (0.0.1):
@@ -84,6 +86,7 @@ DEPENDENCIES:
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - Flutter (from `Flutter`)
   - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
+  - objective_c (from `.symlinks/plugins/objective_c/ios`)
   - onesignal_flutter (from `.symlinks/plugins/onesignal_flutter/ios`)
   - OneSignalXCFramework (< 6.0, >= 5.0.0)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
@@ -110,6 +113,8 @@ EXTERNAL SOURCES:
     :path: Flutter
   fluttertoast:
     :path: ".symlinks/plugins/fluttertoast/ios"
+  objective_c:
+    :path: ".symlinks/plugins/objective_c/ios"
   onesignal_flutter:
     :path: ".symlinks/plugins/onesignal_flutter/ios"
   package_info_plus:
@@ -132,6 +137,7 @@ SPEC CHECKSUMS:
   connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   fluttertoast: 2c67e14dce98bbdb200df9e1acf610d7a6264ea1
+  objective_c: 89e720c30d716b036faf9c9684022048eee1eee2
   onesignal_flutter: 3a2b51f9262c851166a882a553d71a8ccec4e29c
   OneSignalXCFramework: 7112f3e89563e41ebc23fe807788f11985ac541c
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
@@ -139,8 +145,8 @@ SPEC CHECKSUMS:
   purchases_flutter: a5cdfe4efd74e1beb23a069d02f960efdbf327dd
   PurchasesHybridCommon: b7b4eafb55fbaaac19b4c36d4082657a3f0d8490
   RevenueCat: a51003d4cb33820cc504cf177c627832b462a98e
-  Sentry: da60d980b197a46db0b35ea12cb8f39af48d8854
-  sentry_flutter: 27892878729f42701297c628eb90e7c6529f3684
+  Sentry: b53951377b78e21a734f5dc8318e333dbfc682d7
+  sentry_flutter: 4c33648b7e83310aa1fdb1b10c5491027d9643f0
   url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
   webview_cookie_manager: d63a76cabdf42a7ea3d92768ac67d4853a1367f8
   webview_flutter_wkwebview: 8ebf4fded22593026f7dbff1fbff31ea98573c8d
