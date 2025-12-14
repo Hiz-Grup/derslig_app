@@ -133,7 +133,8 @@ class _WebViewPageState extends State<WebViewPage> {
     }
 
     setPages(context);
-
+    final isBottomNavigationBarVisible =
+        context.watch<LoginRegisterPageProvider>().isLogin && deviceHeight(context) > 500;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -144,43 +145,38 @@ class _WebViewPageState extends State<WebViewPage> {
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         backgroundColor: Colors.white,
-        bottomNavigationBar: context.watch<LoginRegisterPageProvider>().isLogin && deviceHeight(context) > 500
-            ? bottomNavigation()
-            : null,
-        body: SafeArea(
-          top: false,
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: deviceHeight(context) - MediaQuery.of(context).viewInsets.bottom,
-                      child: Column(
-                        children: [
-                          Container(height: deviceTopPadding(context), color: AppTheme.blue),
-                          Expanded(
-                            child: WebViewWidget(
-                              controller: controller,
-                            ),
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: deviceHeight(context),
+                    child: Column(
+                      children: [
+                        Container(height: deviceTopPadding(context), color: AppTheme.blue),
+                        Expanded(
+                          child: WebViewWidget(
+                            controller: controller,
                           ),
-                        ],
-                      ),
+                        ),
+                        if (isBottomNavigationBarVisible) bottomNavigation(),
+                      ],
                     ),
-                    SizedBox(
-                      height: MediaQuery.of(context).viewInsets.bottom,
-                    )
-                  ],
+                  ),
+                  SizedBox(
+                    height: MediaQuery.of(context).viewInsets.bottom,
+                  )
+                ],
+              ),
+            ),
+            if (context.watch<LoginRegisterPageProvider>().isLoading)
+              const Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.pink,
                 ),
               ),
-              if (context.watch<LoginRegisterPageProvider>().isLoading)
-                const Center(
-                  child: CircularProgressIndicator(
-                    color: AppTheme.pink,
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );
