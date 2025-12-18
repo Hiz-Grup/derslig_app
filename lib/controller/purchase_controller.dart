@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:derslig/helper/locator.dart';
 import 'package:derslig/models/general_response_model.dart';
@@ -10,21 +11,24 @@ class PurchaseController {
   final _logger = LoggerService.instance;
 
   Future<GeneralResponseModel> buyProduct({
-    required int index,
+    required String transactionId,
+    required String productId,
+    required String productIdentifier,
+    required DateTime purchaseDate,
     required String xsrfToken,
     required String dersligCookie,
+    String source = 'direct',
   }) async {
     try {
-      _logger.addBreadcrumb(
-        'Satın alma başlatıldı',
-        category: 'purchase',
-        data: {'productId': index + 1},
-      );
-
       final response = await _apiService.postRequest(
         "https://www.derslig.com/api/payment/confirm",
         {
-          "productId": (index + 1).toString(),
+          "productId": productId,
+          "transactionId": transactionId,
+          "productIdentifier": productIdentifier,
+          "purchaseDate": purchaseDate.toIso8601String(),
+          "source": source,
+          "platform": Platform.isAndroid ? "android" : "ios",
         },
         headers: {
           "Cookie": "XSRF-TOKEN=$xsrfToken; derslig_cookie=$dersligCookie;",
@@ -32,39 +36,99 @@ class PurchaseController {
       );
 
       if (response.statusCode == 200) {
-        _logger.addBreadcrumb(
-          'Satın alma başarılı',
-          category: 'purchase',
-          data: {'productId': index + 1},
-        );
         return GeneralResponseModel(
           message: "Satın alma işlemi başarılı",
           success: true,
         );
       } else {
-        final errorMessage = json.decode(response.body)["error"];
-        _logger.logWarning(
-          'Satın alma başarısız',
+        final errorMessage = _tryParseError(response.body);
+
+        await _logger.logError(
+          'Backend satın alma bildirimi başarısız',
           context: {
-            'productId': index + 1,
+            'transactionId': transactionId,
+            'productId': productId,
+            'productIdentifier': productIdentifier,
             'statusCode': response.statusCode,
             'error': errorMessage,
+            'source': source,
           },
         );
+
         return GeneralResponseModel(
-          message: errorMessage,
+          message: errorMessage ?? "Satın alma işlemi başarısız",
+          success: false,
+        );
+      }
+    } catch (e, stackTrace) {
+      await _logger.logFatal(
+        'Satın alma backend iletişim hatası',
+        error: e,
+        stackTrace: stackTrace,
+        context: {
+          'transactionId': transactionId,
+          'productId': productId,
+          'productIdentifier': productIdentifier,
+          'purchaseDate': purchaseDate.toIso8601String(),
+          'source': source,
+        },
+      );
+
+      return GeneralResponseModel(
+        message: "Bir hata oluştu",
+        success: false,
+      );
+    }
+  }
+
+  Future<GeneralResponseModel> syncSubscriptionStatus({
+    required bool isActive,
+    required String? expirationDate,
+    required String? productId,
+    required String? originalAppUserId,
+    required String xsrfToken,
+    required String dersligCookie,
+  }) async {
+    try {
+      final response = await _apiService.postRequest(
+        "https://www.derslig.com/api/subscription/sync",
+        {
+          "isActive": isActive.toString(),
+          "expirationDate": expirationDate ?? "",
+          "productId": productId ?? "",
+          "revenueCatProductId": productId ?? "",
+          "revenueCatUserId": originalAppUserId ?? "",
+          "platform": Platform.isAndroid ? "android" : "ios",
+        },
+        headers: {
+          "Cookie": "XSRF-TOKEN=$xsrfToken; derslig_cookie=$dersligCookie;",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return GeneralResponseModel(
+          message: "Abonelik durumu güncellendi",
+          success: true,
+        );
+      } else {
+        return GeneralResponseModel(
+          message: _tryParseError(response.body) ?? "Senkronizasyon başarısız",
           success: false,
         );
       }
     } catch (e, stackTrace) {
       _logger.logError(
-        'Satın alma hatası',
+        'Abonelik senkronizasyonu hatası',
         error: e,
         stackTrace: stackTrace,
-        context: {'productId': index + 1},
+        context: {
+          'isActive': isActive,
+          'productId': productId,
+        },
       );
+
       return GeneralResponseModel(
-        message: "Bir hata oluştu",
+        message: "Bir hata oluştu!",
         success: false,
       );
     }
@@ -89,16 +153,8 @@ class PurchaseController {
           success: true,
         );
       } else {
-        final errorMessage = json.decode(response.body)["error"];
-        _logger.logWarning(
-          'Kullanıcı kontrolü başarısız',
-          context: {
-            'statusCode': response.statusCode,
-            'error': errorMessage,
-          },
-        );
         return GeneralResponseModel(
-          message: errorMessage,
+          message: _tryParseError(response.body) ?? "Kontrol başarısız",
           success: false,
         );
       }
@@ -112,6 +168,15 @@ class PurchaseController {
         message: "Bir hata oluştu!",
         success: false,
       );
+    }
+  }
+
+  String? _tryParseError(String body) {
+    try {
+      final decoded = json.decode(body);
+      return decoded["error"] as String?;
+    } catch (_) {
+      return null;
     }
   }
 }

@@ -1,15 +1,19 @@
 import 'package:derslig/constants/app_theme.dart';
 import 'package:derslig/constants/size.dart';
 import 'package:derslig/helper/hive_helpers.dart';
+import 'package:derslig/models/pending_purchase_model.dart';
 import 'package:derslig/providers/page_provider.dart';
 import 'package:derslig/providers/purchase_provider.dart';
+import 'package:derslig/services/logger_service.dart';
+import 'package:derslig/services/pending_purchase_service.dart';
 import 'package:derslig/views/back_button_widget.dart';
 import 'package:derslig/views/splash_page.dart';
+import 'package:derslig/views/widgets/dialog_widgets.dart';
 import 'package:derslig/views/widgets/loading_dialog.dart';
 import 'package:derslig/views/widgets/toast_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_flutter/purchases_flutter.dart' as rc;
 import 'package:provider/provider.dart';
 
 class DersligProPage extends StatefulWidget {
@@ -20,6 +24,9 @@ class DersligProPage extends StatefulWidget {
 }
 
 class _DersligProPageState extends State<DersligProPage> {
+  final _logger = LoggerService.instance;
+  final _pendingPurchaseService = PendingPurchaseService.instance;
+
   @override
   void initState() {
     SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -29,64 +36,136 @@ class _DersligProPageState extends State<DersligProPage> {
   }
 
   Future<void> buyProduct() async {
-    int selectedPollenIndex = context.read<PurchaseProvider>().selectedPollenIndex;
+    int selectedProductIndex = context.read<PurchaseProvider>().selectedProductIndex;
     final packages = context.read<PurchaseProvider>().packages;
 
-    if (packages.isEmpty || selectedPollenIndex >= packages.length) {
+    if (packages.isEmpty || selectedProductIndex >= packages.length) {
       ToastWidgets.errorToast(context, "Ürün bilgisi bulunamadı.");
       return;
     }
 
-    final Package package = packages[selectedPollenIndex];
+    final rc.Package package = packages[selectedProductIndex];
 
     try {
       context.read<PurchaseProvider>().setBuyState(BuyState.busy);
 
-      CustomerInfo? customerInfo = await context.read<PurchaseProvider>().purchasePackage(package);
+      final purchaseResult = await context.read<PurchaseProvider>().purchasePackage(package);
 
-      if (customerInfo != null) {
-        await context
-            .read<PurchaseProvider>()
-            .buyProduct(
-              dersligCookie: HiveHelpers.getLoginModel()!.dersligCookie,
-              xsrfToken: HiveHelpers.getLoginModel()!.xsrfToken,
-              index: selectedPollenIndex,
-            )
-            .then(
-          (value) {
-            context.read<PurchaseProvider>().setBuyState(BuyState.idle);
-            if (value.success == true) {
-              Navigator.pushReplacementNamed(
-                context,
-                SplashPage.routeName,
-              );
-            }
-            ToastWidgets.responseToast(context, value);
-          },
-        );
+      if (purchaseResult != null) {
+        final loginModel = HiveHelpers.getLoginModel()!;
+        final backendResult = await context.read<PurchaseProvider>().buyProduct(
+              transactionId: purchaseResult.transactionId,
+              productId: (selectedProductIndex + 1).toString(),
+              productIdentifier: purchaseResult.productIdentifier,
+              purchaseDate: purchaseResult.purchaseDate,
+              dersligCookie: loginModel.dersligCookie,
+              xsrfToken: loginModel.xsrfToken,
+            );
+
+        context.read<PurchaseProvider>().setBuyState(BuyState.idle);
+
+        if (backendResult.success == true) {
+          if (mounted) {
+            Navigator.pushReplacementNamed(
+              context,
+              SplashPage.routeName,
+            );
+            ToastWidgets.successToast(context, "Satın alma işlemi başarılı!");
+          }
+        } else {
+          await _handleBackendFailure(
+            purchaseResult: purchaseResult,
+            selectedProductIndex: selectedProductIndex,
+          );
+        }
       } else {
         context.read<PurchaseProvider>().setBuyState(BuyState.idle);
         ToastWidgets.errorToast(context, "Satın alma işlemi iptal edildi veya başarısız oldu.");
       }
-    } on PurchasesErrorCode catch (e) {
+    } on rc.PurchasesErrorCode catch (e) {
       context.read<PurchaseProvider>().setBuyState(BuyState.idle);
-      print("RevenueCat hatası: ${e.toString()}");
 
-      if (e == PurchasesErrorCode.purchaseCancelledError) {
+      if (e == rc.PurchasesErrorCode.purchaseCancelledError) {
         ToastWidgets.errorToast(context, "Satın alma işlemi iptal edildi.");
-      } else if (e == PurchasesErrorCode.paymentPendingError) {
+      } else if (e == rc.PurchasesErrorCode.paymentPendingError) {
         ToastWidgets.errorToast(context, "Ödeme işleminiz beklemede. Lütfen daha sonra tekrar deneyin.");
       } else {
         ToastWidgets.errorToast(context, "Satın alma işlemi başarısız oldu. Lütfen tekrar deneyin.");
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       context.read<PurchaseProvider>().setBuyState(BuyState.idle);
-      print("Satın alma başlatılırken hata: $e");
+
+      _logger.logError(
+        'Satın alma beklenmeyen hata',
+        error: e,
+        stackTrace: stackTrace,
+        context: {
+          'packageId': package.identifier,
+          'selectedIndex': selectedProductIndex,
+        },
+      );
+
       ToastWidgets.errorToast(context, "Satın alma başlatılamadı. Lütfen tekrar deneyin.");
     }
   }
 
-  List<Package> _packages = [];
+  Future<void> _handleBackendFailure({
+    required PurchaseResultData purchaseResult,
+    required int selectedProductIndex,
+  }) async {
+    final pendingPurchase = PendingPurchaseModel(
+      transactionId: purchaseResult.transactionId,
+      productId: (selectedProductIndex + 1).toString(),
+      productIdentifier: purchaseResult.productIdentifier,
+      purchaseDate: purchaseResult.purchaseDate,
+    );
+
+    await _pendingPurchaseService.addPendingPurchase(pendingPurchase);
+
+    await _logger.logFatal(
+      'Satın alma backend\'e iletilemedi - Pending queue\'ya eklendi',
+      context: {
+        'transactionId': purchaseResult.transactionId,
+        'productId': (selectedProductIndex + 1).toString(),
+        'productIdentifier': purchaseResult.productIdentifier,
+        'purchaseDate': purchaseResult.purchaseDate.toIso8601String(),
+        'userId': HiveHelpers.getUserModel()?.id?.toString(),
+        'userEmail': HiveHelpers.getUserModel()?.email,
+      },
+    );
+
+    if (mounted) {
+      _showBackendErrorDialog();
+    }
+  }
+
+  void _showBackendErrorDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => DialogWidgets().rowCircularButtonDialogWidget(
+        ctx,
+        title: "Siparişinizi Aldık",
+        content: "Satın alma işleminiz başarıyla tamamlandı ancak sistemimize kaydedilirken bir sorun oluştu. "
+            "Endişelenmeyin, ödemeniz alındı ve Pro üyeliğiniz kısa süre içinde aktif olacaktır.\n\n"
+            "Eğer 24 saat içinde aktif olmazsa lütfen Derslig ekibiyle iletişime geçiniz.",
+        color: AppTheme.pink,
+        buttonText: "Tamam",
+        cancelButtonText: "Kapat",
+        onAcceptButtonPressed: () {
+          Navigator.of(ctx).pop();
+          Navigator.pushReplacementNamed(context, SplashPage.routeName);
+        },
+        onCancelButtonPressed: () {
+          Navigator.of(ctx).pop();
+          Navigator.pushReplacementNamed(context, SplashPage.routeName);
+        },
+      ),
+    );
+  }
+
+  List<rc.Package> _packages = [];
+
   @override
   Widget build(BuildContext context) {
     _packages = context.watch<PurchaseProvider>().packages;
@@ -165,25 +244,28 @@ class _DersligProPageState extends State<DersligProPage> {
                               final LoadingDialog loadingDialog = LoadingDialog(context);
                               loadingDialog.show();
                               context.read<PurchaseProvider>().setBuyState(BuyState.busy);
+
                               try {
-                                await context
-                                    .read<PurchaseProvider>()
-                                    .checkUser(
-                                        xsrfToken: HiveHelpers.getLoginModel()!.xsrfToken,
-                                        dersligCookie: HiveHelpers.getLoginModel()!.dersligCookie)
-                                    .then((value) {
-                                  if (value.success == true) {
-                                    context.read<PurchaseProvider>().selectedPollenIndex = index;
-                                    loadingDialog.dismiss();
-                                    buyProduct();
-                                  } else {
-                                    ToastWidgets.errorToast(context, value.message);
-                                    loadingDialog.dismiss();
-                                    context.read<PurchaseProvider>().setBuyState(BuyState.idle);
-                                  }
-                                });
-                              } catch (e) {
-                                print("Kullanıcı kontrolü sırasında hata: $e");
+                                final checkResult = await context.read<PurchaseProvider>().checkUser(
+                                      xsrfToken: HiveHelpers.getLoginModel()!.xsrfToken,
+                                      dersligCookie: HiveHelpers.getLoginModel()!.dersligCookie,
+                                    );
+
+                                if (checkResult.success == true) {
+                                  context.read<PurchaseProvider>().selectProduct(index);
+                                  loadingDialog.dismiss();
+                                  buyProduct();
+                                } else {
+                                  ToastWidgets.errorToast(context, checkResult.message);
+                                  loadingDialog.dismiss();
+                                  context.read<PurchaseProvider>().setBuyState(BuyState.idle);
+                                }
+                              } catch (e, stackTrace) {
+                                _logger.logError(
+                                  'Kullanıcı kontrolü sırasında hata',
+                                  error: e,
+                                  stackTrace: stackTrace,
+                                );
                                 loadingDialog.dismiss();
                                 context.read<PurchaseProvider>().setBuyState(BuyState.idle);
                                 ToastWidgets.errorToast(

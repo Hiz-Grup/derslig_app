@@ -9,6 +9,8 @@ import 'package:derslig/models/page_model.dart';
 import 'package:derslig/models/user_model.dart';
 import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:derslig/providers/page_provider.dart';
+import 'package:derslig/providers/purchase_provider.dart';
+import 'package:derslig/services/logger_service.dart';
 import 'package:derslig/views/derslig_pro_page.dart';
 import 'package:derslig/views/widgets/no_internet_widget.dart';
 import 'package:flutter/material.dart';
@@ -126,6 +128,7 @@ class _WebViewPageState extends State<WebViewPage> {
         context.read<LoginRegisterPageProvider>().controlUser().then(
           (value) {
             oneSignalTags();
+            _loginToRevenueCatAndSentry();
           },
         );
       });
@@ -357,6 +360,7 @@ class _WebViewPageState extends State<WebViewPage> {
       }
     } else if (request.url.contains("https://www.derslig.com/cikis")) {
       HiveHelpers.logout(context);
+      _logoutFromRevenueCatAndSentry();
       context.read<LoginRegisterPageProvider>().isTriggeredLogoutPage = true;
       return NavigationDecision.navigate;
     } else if (request.url == "https://www.derslig.com/") {
@@ -397,5 +401,36 @@ class _WebViewPageState extends State<WebViewPage> {
       OneSignal.User.addTagWithKey("class", userClass);
       OneSignal.User.addTagWithKey("isPremium", isPro.toString());
     }
+  }
+
+  Future<void> _loginToRevenueCatAndSentry() async {
+    final userModel = HiveHelpers.getUserModel();
+    if (userModel == null) return;
+
+    try {
+      await context.read<PurchaseProvider>().loginToRevenueCat(
+            userId: userModel.id.toString(),
+            email: userModel.email,
+            displayName: '${userModel.name ?? ''} ${userModel.surname ?? ''}'.trim(),
+          );
+
+      await LoggerService.instance.setUser(
+        userId: userModel.id.toString(),
+        email: userModel.email,
+        username: userModel.name,
+      );
+    } catch (e, stackTrace) {
+      LoggerService.instance.logError(
+        'Login sonrası RevenueCat/Sentry hatası',
+        error: e,
+        stackTrace: stackTrace,
+        context: {'userId': userModel.id},
+      );
+    }
+  }
+
+  Future<void> _logoutFromRevenueCatAndSentry() async {
+    await context.read<PurchaseProvider>().logoutFromRevenueCat();
+    await LoggerService.instance.clearUser();
   }
 }

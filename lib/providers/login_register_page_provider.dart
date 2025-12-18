@@ -70,10 +70,6 @@ class LoginRegisterPageProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<LoginResponseModel?> login(String email, String password) async {
-    return await _loginRegisterPageController.login(email, password);
-  }
-
   Future<GeneralResponseModel> controlVersion() async {
     return await _loginRegisterPageController.controlVersion();
   }
@@ -98,7 +94,6 @@ class LoginRegisterPageProvider with ChangeNotifier {
           xsrfToken: loginResponseModel.xsrfToken,
           dersligCookie: loginResponseModel.dersligCookie,
         );
-        print("userModel: ${userModel?.toJson()}");
         if (userModel!.isPremium != null) {
           isLogin = true;
         } else {

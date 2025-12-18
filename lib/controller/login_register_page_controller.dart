@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:derslig/helper/hive_helpers.dart';
 import 'package:derslig/helper/locator.dart';
 import 'package:derslig/models/general_response_model.dart';
-import 'package:derslig/models/login_response_model.dart';
 import 'package:derslig/models/user_model.dart';
 import 'package:derslig/services/api_service.dart';
 import 'package:derslig/services/logger_service.dart';
@@ -13,27 +12,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 class LoginRegisterPageController {
   final _apiService = locator<ApiService>();
   final _logger = LoggerService.instance;
-
-  Future<LoginResponseModel?> login(String email, String password) async {
-    try {
-      LoginResponseModel loginResponseModel = await _apiService.login(email, password);
-
-      HiveHelpers.saveLoginModel(loginResponseModel);
-      HiveHelpers.saveUserStatus(true);
-
-      _logger.addBreadcrumb('Kullanıcı giriş yaptı', category: 'auth');
-
-      return loginResponseModel;
-    } catch (e, stackTrace) {
-      _logger.logError(
-        'Login hatası',
-        error: e,
-        stackTrace: stackTrace,
-        context: {'email': email},
-      );
-      return null;
-    }
-  }
 
   Future<GeneralResponseModel> controlVersion() async {
     try {

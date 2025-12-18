@@ -7,7 +7,9 @@ import 'package:derslig/helper/url_launcher_helper.dart';
 import 'package:derslig/models/general_response_model.dart';
 import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:derslig/providers/purchase_provider.dart';
+import 'package:derslig/services/logger_service.dart';
 import 'package:derslig/services/one_signal_service.dart';
+import 'package:derslig/services/pending_purchase_service.dart';
 import 'package:derslig/views/onboarding_page.dart';
 import 'package:derslig/views/web_view_page.dart';
 import 'package:derslig/views/widgets/dialog_widgets.dart';
@@ -26,6 +28,9 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  final _logger = LoggerService.instance;
+  final _pendingPurchaseService = PendingPurchaseService.instance;
+
   @override
   void initState() {
     InternetConnectionChecker().hasConnection.then((isDeviceConnected) {
@@ -47,28 +52,125 @@ class _SplashPageState extends State<SplashPage> {
         if (versionResponse.success == false) {
           _showForceUpdateDialog();
         } else {
-          context.read<PurchaseProvider>().initPlatformState().then((value) async {
-            if (HiveHelpers.getOnboardingStatus() == true) {
-              await context.read<LoginRegisterPageProvider>().controlUser();
-              // ignore: use_build_context_synchronously
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const WebViewPage(
-                    url: "https://derslig.com/giris",
-                  ),
-                ),
-              );
-            } else {
-              HiveHelpers.saveOnboardingStatus();
-              Navigator.pushReplacementNamed(context, OnboardingPage.routeName);
-            }
-          });
+          await _initializePurchaseAndSync();
         }
       },
     );
 
     super.initState();
+  }
+
+  Future<void> _initializePurchaseAndSync() async {
+    try {
+      await context.read<PurchaseProvider>().initPlatformState();
+
+      if (HiveHelpers.getOnboardingStatus() == true) {
+        await context.read<LoginRegisterPageProvider>().controlUser();
+
+        final userModel = HiveHelpers.getUserModel();
+        final loginModel = HiveHelpers.getLoginModel();
+
+        if (userModel != null && loginModel != null) {
+          await _handleLoggedInUser(userModel, loginModel);
+        }
+
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const WebViewPage(
+                url: "https://derslig.com/giris",
+              ),
+            ),
+          );
+        }
+      } else {
+        HiveHelpers.saveOnboardingStatus();
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, OnboardingPage.routeName);
+        }
+      }
+    } catch (e, stackTrace) {
+      _logger.logError(
+        'Splash başlatma hatası',
+        error: e,
+        stackTrace: stackTrace,
+      );
+
+      if (mounted) {
+        if (HiveHelpers.getOnboardingStatus() == true) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const WebViewPage(
+                url: "https://derslig.com/giris",
+              ),
+            ),
+          );
+        } else {
+          HiveHelpers.saveOnboardingStatus();
+          Navigator.pushReplacementNamed(context, OnboardingPage.routeName);
+        }
+      }
+    }
+  }
+
+  Future<void> _handleLoggedInUser(userModel, loginModel) async {
+    try {
+      await context.read<PurchaseProvider>().loginToRevenueCat(
+            userId: userModel.id.toString(),
+            email: userModel.email,
+            displayName: '${userModel.name ?? ''} ${userModel.surname ?? ''}'.trim(),
+          );
+
+      await _logger.setUser(
+        userId: userModel.id.toString(),
+        email: userModel.email,
+        username: userModel.name,
+      );
+
+      await _processPendingPurchases();
+
+      await _syncSubscriptionStatus(loginModel);
+    } catch (e, stackTrace) {
+      _logger.logError(
+        'Kullanıcı RevenueCat/Abonelik işlemleri hatası',
+        error: e,
+        stackTrace: stackTrace,
+        context: {'userId': userModel.id},
+      );
+    }
+  }
+
+  Future<void> _processPendingPurchases() async {
+    try {
+      if (!_pendingPurchaseService.hasPendingPurchases) {
+        return;
+      }
+
+      await _pendingPurchaseService.processPendingPurchases();
+    } catch (e, stackTrace) {
+      _logger.logError(
+        'Bekleyen satın alma işleme hatası',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _syncSubscriptionStatus(loginModel) async {
+    try {
+      await context.read<PurchaseProvider>().syncSubscriptionStatus(
+            xsrfToken: loginModel.xsrfToken,
+            dersligCookie: loginModel.dersligCookie,
+          );
+    } catch (e, stackTrace) {
+      _logger.logError(
+        'Abonelik senkronizasyonu hatası',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   @override

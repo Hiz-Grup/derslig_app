@@ -68,6 +68,7 @@ Future<void> _initializeApp() async {
     Hive.openBox('user'),
     Hive.openBox('onboarding'),
     Hive.openBox('login'),
+    Hive.openBox('pendingPurchases'),
   ]);
 
   if (Platform.isAndroid || Platform.isIOS) {
@@ -81,11 +82,6 @@ Future<void> _initializeApp() async {
       );
     }
   }
-
-  LoggerService.instance.addBreadcrumb(
-    'Uygulama başlatıldı',
-    category: 'app.lifecycle',
-  );
 }
 
 class MyApp extends StatelessWidget {

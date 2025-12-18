@@ -17,47 +17,39 @@ class LoggerService {
   LoggerService._internal();
 
   static const String sentryDsn =
-      'https://c9f2d8f476d099530d6a1093886e84fc@o293205.ingest.us.sentry.io/4510511197650944';
+      'https://eaf1961b6437c11f02ff04b79d58fac2@o4510510395949056.ingest.de.sentry.io/4510510398242896';
 
   static Future<void> init({required Future<void> Function() appRunner}) async {
     await SentryFlutter.init(
       (options) {
         options.dsn = sentryDsn;
-        options.debug = true;
-        options.diagnosticLevel = SentryLevel.info;
+        options.debug = kDebugMode;
+        options.diagnosticLevel = SentryLevel.error;
 
-        options.enableAutoSessionTracking = true;
-        options.autoSessionTrackingInterval = const Duration(milliseconds: 30000);
-
+        options.enableAutoSessionTracking = false;
         options.sampleRate = 1.0;
-        options.tracesSampleRate = 1.0;
+        options.tracesSampleRate = 0.0;
 
-        options.attachViewHierarchy = true;
-
+        options.attachViewHierarchy = false;
         options.environment = kDebugMode ? 'development' : 'production';
 
         options.sendDefaultPii = true;
-        options.enableAutoNativeBreadcrumbs = true;
-        options.enableAutoPerformanceTracing = true;
-
+        options.enableAutoNativeBreadcrumbs = false;
+        options.enableAutoPerformanceTracing = false;
         options.attachScreenshot = false;
 
         options.beforeSend = (event, hint) {
-          debugPrint('🚀 [Sentry] Event gönderiliyor: ${event.eventId}');
-          debugPrint('   Type: ${event.type}');
-          debugPrint('   Level: ${event.level}');
-          debugPrint('   Message: ${event.message?.formatted}');
-          if (event.exceptions != null && event.exceptions!.isNotEmpty) {
-            debugPrint('   Exception: ${event.exceptions?.first.value}');
+          if (kDebugMode) {
+            debugPrint('🚀 [Sentry] Event gönderiliyor: ${event.eventId}');
+            if (event.exceptions != null && event.exceptions!.isNotEmpty) {
+              debugPrint('   Exception: ${event.exceptions?.first.value}');
+            }
           }
           return event;
         };
 
         options.beforeBreadcrumb = (breadcrumb, hint) {
-          if (kDebugMode) {
-            debugPrint('🍞 [Sentry] Breadcrumb: ${breadcrumb?.message}');
-          }
-          return breadcrumb;
+          return null;
         };
       },
       appRunner: appRunner,
@@ -92,34 +84,16 @@ class LoggerService {
     }
   }
 
-  Future<void> log(
-    String message, {
-    LogLevel level = LogLevel.info,
-    Object? error,
-    StackTrace? stackTrace,
-    Map<String, dynamic>? context,
-  }) async {
+  void logInfo(String message, {Map<String, dynamic>? context}) {
     if (kDebugMode) {
-      _printToConsole(message, level: level, error: error);
+      _printToConsole(message, level: LogLevel.info);
     }
-
-    await Sentry.captureMessage(
-      message,
-      level: _mapLogLevel(level),
-      withScope: (scope) {
-        if (context != null) {
-          scope.setContexts('custom', context);
-        }
-      },
-    );
   }
 
-  Future<void> logInfo(String message, {Map<String, dynamic>? context}) async {
-    await log(message, level: LogLevel.info, context: context);
-  }
-
-  Future<void> logWarning(String message, {Map<String, dynamic>? context}) async {
-    await log(message, level: LogLevel.warning, context: context);
+  void logWarning(String message, {Map<String, dynamic>? context}) {
+    if (kDebugMode) {
+      _printToConsole(message, level: LogLevel.warning);
+    }
   }
 
   Future<void> logError(
@@ -147,7 +121,15 @@ class LoggerService {
         },
       );
     } else {
-      await log(message, level: LogLevel.error, context: context);
+      await Sentry.captureMessage(
+        message,
+        level: SentryLevel.error,
+        withScope: (scope) {
+          if (context != null) {
+            scope.setContexts('custom', context);
+          }
+        },
+      );
     }
   }
 
@@ -174,7 +156,16 @@ class LoggerService {
         },
       );
     } else {
-      await log(message, level: LogLevel.fatal, context: context);
+      await Sentry.captureMessage(
+        message,
+        level: SentryLevel.fatal,
+        withScope: (scope) {
+          scope.setTag('severity', 'fatal');
+          if (context != null) {
+            scope.setContexts('custom', context);
+          }
+        },
+      );
     }
   }
 
@@ -205,27 +196,6 @@ class LoggerService {
         scope.setTag('error_type', 'api_error');
         scope.setTag('status_code', statusCode.toString());
       },
-    );
-  }
-
-  void addBreadcrumb(
-    String message, {
-    String? category,
-    Map<String, dynamic>? data,
-    SentryLevel? level,
-  }) {
-    if (kDebugMode) {
-      debugPrint('🍞 Breadcrumb: $message');
-    }
-
-    Sentry.addBreadcrumb(
-      Breadcrumb(
-        message: message,
-        category: category ?? 'app',
-        data: data,
-        level: level ?? SentryLevel.info,
-        timestamp: DateTime.now(),
-      ),
     );
   }
 
@@ -281,21 +251,6 @@ class LoggerService {
     );
   }
 
-  SentryLevel _mapLogLevel(LogLevel level) {
-    switch (level) {
-      case LogLevel.debug:
-        return SentryLevel.debug;
-      case LogLevel.info:
-        return SentryLevel.info;
-      case LogLevel.warning:
-        return SentryLevel.warning;
-      case LogLevel.error:
-        return SentryLevel.error;
-      case LogLevel.fatal:
-        return SentryLevel.fatal;
-    }
-  }
-
   void _printToConsole(String message, {required LogLevel level, Object? error}) {
     final String emoji;
     switch (level) {
@@ -319,56 +274,6 @@ class LoggerService {
     debugPrint('$emoji [${level.name.toUpperCase()}] $message');
     if (error != null) {
       debugPrint('   Error: $error');
-    }
-  }
-
-  Future<SentryId?> testSentryIntegration() async {
-    // ignore: avoid_print
-    print('🔄 [Sentry] Test başlatılıyor...');
-    // ignore: avoid_print
-    print('   DSN: ${sentryDsn.substring(0, 50)}...');
-    // ignore: avoid_print
-    print('   Environment: ${kDebugMode ? 'development' : 'production'}');
-    // ignore: avoid_print
-    print('   Sentry Enabled: ${Sentry.isEnabled}');
-
-    if (!Sentry.isEnabled) {
-      // ignore: avoid_print
-      print('❌ [Sentry] SDK etkin değil! DSN kontrol edin.');
-      return null;
-    }
-
-    try {
-      final sentryId = await Sentry.captureException(
-        Exception('Sentry Test - ${DateTime.now().toIso8601String()}'),
-        stackTrace: StackTrace.current,
-        withScope: (scope) {
-          scope.setTag('test', 'true');
-          scope.setTag('source', 'flutter_app');
-          scope.setContexts('test_info', {
-            'timestamp': DateTime.now().toIso8601String(),
-            'environment': kDebugMode ? 'development' : 'production',
-            'platform': 'flutter',
-          });
-        },
-      );
-
-
-
-      // ignore: avoid_print
-      print('✅ [Sentry] Test başarılı!');
-      // ignore: avoid_print
-      print('   Event ID: $sentryId');
-      // ignore: avoid_print
-      print('   Dashboard\'da bu ID\'yi arayın: $sentryId');
-
-      return sentryId;
-    } catch (e, stack) {
-      // ignore: avoid_print
-      print('❌ [Sentry] Test başarısız: $e');
-      // ignore: avoid_print
-      print('   Stack: $stack');
-      return null;
     }
   }
 
