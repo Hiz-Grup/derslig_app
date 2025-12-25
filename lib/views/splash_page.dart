@@ -130,8 +130,6 @@ class _SplashPageState extends State<SplashPage> {
       );
 
       await _processPendingPurchases();
-
-      await _syncSubscriptionStatus(loginModel);
     } catch (e, stackTrace) {
       _logger.logError(
         'Kullanıcı RevenueCat/Abonelik işlemleri hatası',
@@ -152,21 +150,6 @@ class _SplashPageState extends State<SplashPage> {
     } catch (e, stackTrace) {
       _logger.logError(
         'Bekleyen satın alma işleme hatası',
-        error: e,
-        stackTrace: stackTrace,
-      );
-    }
-  }
-
-  Future<void> _syncSubscriptionStatus(loginModel) async {
-    try {
-      await context.read<PurchaseProvider>().syncSubscriptionStatus(
-            xsrfToken: loginModel.xsrfToken,
-            dersligCookie: loginModel.dersligCookie,
-          );
-    } catch (e, stackTrace) {
-      _logger.logError(
-        'Abonelik senkronizasyonu hatası',
         error: e,
         stackTrace: stackTrace,
       );

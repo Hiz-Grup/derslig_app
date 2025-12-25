@@ -81,59 +81,6 @@ class PurchaseController {
     }
   }
 
-  Future<GeneralResponseModel> syncSubscriptionStatus({
-    required bool isActive,
-    required String? expirationDate,
-    required String? productId,
-    required String? originalAppUserId,
-    required String xsrfToken,
-    required String dersligCookie,
-  }) async {
-    try {
-      final response = await _apiService.postRequest(
-        "https://www.derslig.com/api/subscription/sync",
-        {
-          "isActive": isActive.toString(),
-          "expirationDate": expirationDate ?? "",
-          "productId": productId ?? "",
-          "revenueCatProductId": productId ?? "",
-          "revenueCatUserId": originalAppUserId ?? "",
-          "platform": Platform.isAndroid ? "android" : "ios",
-        },
-        headers: {
-          "Cookie": "XSRF-TOKEN=$xsrfToken; derslig_cookie=$dersligCookie;",
-        },
-      );
-
-      if (response.statusCode == 200) {
-        return GeneralResponseModel(
-          message: "Abonelik durumu güncellendi",
-          success: true,
-        );
-      } else {
-        return GeneralResponseModel(
-          message: _tryParseError(response.body) ?? "Senkronizasyon başarısız",
-          success: false,
-        );
-      }
-    } catch (e, stackTrace) {
-      _logger.logError(
-        'Abonelik senkronizasyonu hatası',
-        error: e,
-        stackTrace: stackTrace,
-        context: {
-          'isActive': isActive,
-          'productId': productId,
-        },
-      );
-
-      return GeneralResponseModel(
-        message: "Bir hata oluştu!",
-        success: false,
-      );
-    }
-  }
-
   Future<GeneralResponseModel> checkUser({
     required String xsrfToken,
     required String dersligCookie,

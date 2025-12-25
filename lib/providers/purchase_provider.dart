@@ -102,58 +102,6 @@ class PurchaseProvider with ChangeNotifier {
     }
   }
 
-  Future<GeneralResponseModel> syncSubscriptionStatus({
-    required String xsrfToken,
-    required String dersligCookie,
-  }) async {
-    try {
-      if (!Platform.isAndroid && !Platform.isIOS) {
-        return GeneralResponseModel(
-          message: "Platform desteklenmiyor",
-          success: false,
-        );
-      }
-
-      final customerInfo = await getCustomerInfo();
-      if (customerInfo == null) {
-        return GeneralResponseModel(
-          message: "Müşteri bilgileri alınamadı",
-          success: false,
-        );
-      }
-
-      final activeEntitlements = customerInfo.entitlements.active;
-      final isActive = activeEntitlements.isNotEmpty;
-
-      String? expirationDate;
-      String? productId;
-
-      if (isActive && activeEntitlements.values.isNotEmpty) {
-        final entitlement = activeEntitlements.values.first;
-        expirationDate = entitlement.expirationDate;
-        productId = entitlement.productIdentifier;
-      }
-
-      return await _purchaseController.syncSubscriptionStatus(
-        isActive: isActive,
-        expirationDate: expirationDate,
-        productId: productId,
-        originalAppUserId: customerInfo.originalAppUserId,
-        xsrfToken: xsrfToken,
-        dersligCookie: dersligCookie,
-      );
-    } catch (e, stackTrace) {
-      _logger.logError(
-        'Abonelik senkronizasyonu hatası',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      return GeneralResponseModel(
-        message: "Senkronizasyon hatası",
-        success: false,
-      );
-    }
-  }
 
   Future<SubscriptionStatus> getSubscriptionStatus() async {
     try {
