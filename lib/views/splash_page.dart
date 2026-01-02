@@ -10,6 +10,7 @@ import 'package:derslig/providers/purchase_provider.dart';
 import 'package:derslig/services/logger_service.dart';
 import 'package:derslig/services/one_signal_service.dart';
 import 'package:derslig/services/pending_purchase_service.dart';
+import 'package:derslig/services/user_sync_service.dart';
 import 'package:derslig/views/onboarding_page.dart';
 import 'package:derslig/views/web_view_page.dart';
 import 'package:derslig/views/widgets/dialog_widgets.dart';
@@ -71,7 +72,7 @@ class _SplashPageState extends State<SplashPage> {
         final loginModel = HiveHelpers.getLoginModel();
 
         if (userModel != null && loginModel != null) {
-          await _handleLoggedInUser(userModel, loginModel);
+          await _handleLoggedInUser();
         }
 
         if (mounted) {
@@ -115,27 +116,15 @@ class _SplashPageState extends State<SplashPage> {
     }
   }
 
-  Future<void> _handleLoggedInUser(userModel, loginModel) async {
+  Future<void> _handleLoggedInUser() async {
     try {
-      await context.read<PurchaseProvider>().loginToRevenueCat(
-            userId: userModel.id.toString(),
-            email: userModel.email,
-            displayName: '${userModel.name ?? ''} ${userModel.surname ?? ''}'.trim(),
-          );
-
-      await _logger.setUser(
-        userId: userModel.id.toString(),
-        email: userModel.email,
-        username: userModel.name,
-      );
-
+      await UserSyncService.instance.syncUserData(context);
       await _processPendingPurchases();
     } catch (e, stackTrace) {
       _logger.logError(
-        'Kullanıcı RevenueCat/Abonelik işlemleri hatası',
+        'Kullanıcı sync işlemleri hatası',
         error: e,
         stackTrace: stackTrace,
-        context: {'userId': userModel.id},
       );
     }
   }

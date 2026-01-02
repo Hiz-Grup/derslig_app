@@ -10,6 +10,79 @@ class PurchaseController {
   final _apiService = locator<ApiService>();
   final _logger = LoggerService.instance;
 
+  Future<GeneralResponseModel> confirmSubscription({
+    required String transactionId,
+    required String productIdentifier,
+    required DateTime purchaseDate,
+    DateTime? expirationDate,
+    required bool isTrialPeriod,
+    required bool willRenew,
+    required String xsrfToken,
+    required String dersligCookie,
+    String source = 'direct',
+  }) async {
+    try {
+      final response = await _apiService.postRequest(
+        "https://www.derslig.com/api/subscription/confirm",
+        {
+          "transactionId": transactionId,
+          "productIdentifier": productIdentifier,
+          "purchaseDate": purchaseDate.toIso8601String(),
+          if (expirationDate != null) "expirationDate": expirationDate.toIso8601String(),
+          "isTrialPeriod": isTrialPeriod.toString(),
+          "willAutoRenew": willRenew.toString(),
+          "source": source,
+          "platform": Platform.isAndroid ? "android" : "ios",
+        },
+        headers: {
+          "Cookie": "XSRF-TOKEN=$xsrfToken; derslig_cookie=$dersligCookie;",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return GeneralResponseModel(
+          message: "Abonelik başarıyla aktifleştirildi",
+          success: true,
+        );
+      } else {
+        final errorMessage = _tryParseError(response.body);
+
+        await _logger.logError(
+          'Backend subscription bildirimi başarısız',
+          context: {
+            'transactionId': transactionId,
+            'productIdentifier': productIdentifier,
+            'statusCode': response.statusCode,
+            'error': errorMessage,
+            'source': source,
+          },
+        );
+
+        return GeneralResponseModel(
+          message: errorMessage ?? "Abonelik aktifleştirilemedi",
+          success: false,
+        );
+      }
+    } catch (e, stackTrace) {
+      await _logger.logFatal(
+        'Subscription backend iletişim hatası',
+        error: e,
+        stackTrace: stackTrace,
+        context: {
+          'transactionId': transactionId,
+          'productIdentifier': productIdentifier,
+          'purchaseDate': purchaseDate.toIso8601String(),
+          'source': source,
+        },
+      );
+
+      return GeneralResponseModel(
+        message: "Bir hata oluştu",
+        success: false,
+      );
+    }
+  }
+
   Future<GeneralResponseModel> buyProduct({
     required String transactionId,
     required String productId,

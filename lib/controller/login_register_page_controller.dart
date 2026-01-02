@@ -70,6 +70,10 @@ class LoginRegisterPageController {
         },
       );
 
+      if (response.statusCode == 401) {
+        return UserModel();
+      }
+
       UserModel userModel = UserModel.fromJson(json.decode(response.body)["data"]);
       HiveHelpers.saveUserModel(userModel);
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:derslig/helper/hive_helpers.dart';
 import 'package:derslig/helper/locator.dart';
@@ -31,7 +32,7 @@ class PendingPurchaseService {
         stackTrace: stackTrace,
         context: {
           'transactionId': purchase.transactionId,
-          'productId': purchase.productId,
+          'productIdentifier': purchase.productIdentifier,
         },
       );
     }
@@ -108,8 +109,8 @@ class PendingPurchaseService {
           'Satın alma backend\'e iletilemedi - Max retry aşıldı',
           context: {
             'transactionId': purchase.transactionId,
-            'productId': purchase.productId,
             'productIdentifier': purchase.productIdentifier,
+            'isSubscription': purchase.isSubscription,
             'purchaseDate': purchase.purchaseDate.toIso8601String(),
             'retryCount': purchase.retryCount,
             'createdAt': purchase.createdAt.toIso8601String(),
@@ -158,21 +159,11 @@ class PendingPurchaseService {
         return false;
       }
 
-      final response = await _apiService.postRequest(
-        "https://www.derslig.com/api/payment/confirm",
-        {
-          "productId": purchase.productId,
-          "transactionId": purchase.transactionId,
-          "productIdentifier": purchase.productIdentifier,
-          "purchaseDate": purchase.purchaseDate.toIso8601String(),
-          "source": "pending_retry",
-        },
-        headers: {
-          "Cookie": "XSRF-TOKEN=${loginModel.xsrfToken}; derslig_cookie=${loginModel.dersligCookie};",
-        },
-      );
-
-      return response.statusCode == 200;
+      if (purchase.isSubscription) {
+        return await _sendSubscriptionToBackend(purchase, loginModel);
+      } else {
+        return await _sendLegacyPurchaseToBackend(purchase, loginModel);
+      }
     } catch (e, stackTrace) {
       _logger.logError(
         'Bekleyen satın alma gönderilirken hata',
@@ -180,11 +171,58 @@ class PendingPurchaseService {
         stackTrace: stackTrace,
         context: {
           'transactionId': purchase.transactionId,
-          'productId': purchase.productId,
+          'productIdentifier': purchase.productIdentifier,
         },
       );
       return false;
     }
+  }
+
+  Future<bool> _sendSubscriptionToBackend(
+    PendingPurchaseModel purchase,
+    dynamic loginModel,
+  ) async {
+    final response = await _apiService.postRequest(
+      "https://www.derslig.com/api/subscription/confirm",
+      {
+        "transactionId": purchase.transactionId,
+        "productIdentifier": purchase.productIdentifier,
+        "purchaseDate": purchase.purchaseDate.toIso8601String(),
+        if (purchase.expirationDate != null) "expirationDate": purchase.expirationDate!.toIso8601String(),
+        "isTrialPeriod": purchase.isTrialPeriod.toString(),
+        "willAutoRenew": purchase.willRenew.toString(),
+        "source": "pending_retry",
+        "platform": Platform.isAndroid ? "android" : "ios",
+      },
+      headers: {
+        "Cookie": "XSRF-TOKEN=${loginModel.xsrfToken}; derslig_cookie=${loginModel.dersligCookie};",
+      },
+    );
+
+    return response.statusCode == 200;
+  }
+
+  @Deprecated('Use _sendSubscriptionToBackend for new purchases')
+  Future<bool> _sendLegacyPurchaseToBackend(
+    PendingPurchaseModel purchase,
+    dynamic loginModel,
+  ) async {
+    final response = await _apiService.postRequest(
+      "https://www.derslig.com/api/payment/confirm",
+      {
+        "productId": purchase.productId ?? '',
+        "transactionId": purchase.transactionId,
+        "productIdentifier": purchase.productIdentifier,
+        "purchaseDate": purchase.purchaseDate.toIso8601String(),
+        "source": "pending_retry",
+        "platform": Platform.isAndroid ? "android" : "ios",
+      },
+      headers: {
+        "Cookie": "XSRF-TOKEN=${loginModel.xsrfToken}; derslig_cookie=${loginModel.dersligCookie};",
+      },
+    );
+
+    return response.statusCode == 200;
   }
 }
 

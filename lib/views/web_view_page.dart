@@ -6,17 +6,14 @@ import 'package:derslig/constants/size.dart';
 import 'package:derslig/helper/hive_helpers.dart';
 import 'package:derslig/models/login_response_model.dart';
 import 'package:derslig/models/page_model.dart';
-import 'package:derslig/models/user_model.dart';
 import 'package:derslig/providers/login_register_page_provider.dart';
 import 'package:derslig/providers/page_provider.dart';
-import 'package:derslig/providers/purchase_provider.dart';
-import 'package:derslig/services/logger_service.dart';
+import 'package:derslig/services/user_sync_service.dart';
 import 'package:derslig/views/derslig_pro_page.dart';
 import 'package:derslig/views/widgets/no_internet_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_cookie_manager/webview_cookie_manager.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -127,8 +124,7 @@ class _WebViewPageState extends State<WebViewPage> {
         HiveHelpers.saveLoginModel(loginResponseModel);
         context.read<LoginRegisterPageProvider>().controlUser().then(
           (value) {
-            oneSignalTags();
-            _loginToRevenueCatAndSentry();
+            UserSyncService.instance.syncUserData(context);
           },
         );
       });
@@ -199,14 +195,14 @@ class _WebViewPageState extends State<WebViewPage> {
         selectedIcon: const Icon(Icons.person_rounded),
         url: "https://www.derslig.com/profilim",
       ),
-      if ((context.watch<LoginRegisterPageProvider>().userModel?.isPremium != 1 &&
-          context.watch<LoginRegisterPageProvider>().userModel?.type != 1))
-        PageModel(
-          title: "Derslig Pro",
-          icon: const Icon(Icons.workspace_premium_rounded),
-          selectedIcon: const Icon(Icons.workspace_premium_rounded),
-          url: "https://www.derslig.com/",
-        ),
+      // if ((context.watch<LoginRegisterPageProvider>().userModel?.isPremium != 1 &&
+      //     context.watch<LoginRegisterPageProvider>().userModel?.type != 1))
+      PageModel(
+        title: "Derslig Pro",
+        icon: const Icon(Icons.workspace_premium_rounded),
+        selectedIcon: const Icon(Icons.workspace_premium_rounded),
+        url: "https://www.derslig.com/",
+      ),
       PageModel(
         title: "Dersler",
         icon: const Icon(Icons.menu_book_rounded),
@@ -360,7 +356,7 @@ class _WebViewPageState extends State<WebViewPage> {
       }
     } else if (request.url.contains("https://www.derslig.com/cikis")) {
       HiveHelpers.logout(context);
-      _logoutFromRevenueCatAndSentry();
+      UserSyncService.instance.clearUserData(context);
       context.read<LoginRegisterPageProvider>().isTriggeredLogoutPage = true;
       return NavigationDecision.navigate;
     } else if (request.url == "https://www.derslig.com/") {
@@ -375,62 +371,5 @@ class _WebViewPageState extends State<WebViewPage> {
     } else {
       return NavigationDecision.navigate;
     }
-  }
-
-  Future<void> oneSignalTags() async {
-    if (context.read<LoginRegisterPageProvider>().isLogin) {
-      UserModel userModel = context.read<LoginRegisterPageProvider>().userModel!;
-      bool isPro = userModel.isPremium == 1;
-      int userClass = userModel.gradeId ?? 0;
-
-      await OneSignal.login(userModel.id.toString());
-      String phone = (userModel.phone ?? "")
-          .replaceAll("+9", "")
-          .replaceAll(" ", "")
-          .replaceAll("(", "")
-          .replaceAll(")", "")
-          .replaceAll("-", "");
-      if (phone.length == 10) {
-        phone = "0$phone";
-      }
-      phone = "+9$phone";
-      log("phone: $phone");
-      OneSignal.User.addSms(phone);
-      OneSignal.User.addEmail(userModel.email ?? "");
-      OneSignal.User.removeTags(["class", "isPremium"]);
-      OneSignal.User.addTagWithKey("class", userClass);
-      OneSignal.User.addTagWithKey("isPremium", isPro.toString());
-    }
-  }
-
-  Future<void> _loginToRevenueCatAndSentry() async {
-    final userModel = HiveHelpers.getUserModel();
-    if (userModel == null) return;
-
-    try {
-      await context.read<PurchaseProvider>().loginToRevenueCat(
-            userId: userModel.id.toString(),
-            email: userModel.email,
-            displayName: '${userModel.name ?? ''} ${userModel.surname ?? ''}'.trim(),
-          );
-
-      await LoggerService.instance.setUser(
-        userId: userModel.id.toString(),
-        email: userModel.email,
-        username: userModel.name,
-      );
-    } catch (e, stackTrace) {
-      LoggerService.instance.logError(
-        'Login sonrası RevenueCat/Sentry hatası',
-        error: e,
-        stackTrace: stackTrace,
-        context: {'userId': userModel.id},
-      );
-    }
-  }
-
-  Future<void> _logoutFromRevenueCatAndSentry() async {
-    await context.read<PurchaseProvider>().logoutFromRevenueCat();
-    await LoggerService.instance.clearUser();
   }
 }

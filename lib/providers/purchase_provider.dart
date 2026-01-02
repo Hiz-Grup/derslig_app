@@ -9,6 +9,12 @@ import 'package:purchases_flutter/purchases_flutter.dart' as rc;
 
 enum BuyState { idle, busy }
 
+class EntitlementIds {
+  static const String proAccess = 'pro_access';
+  static const String legacyIos = 'derslig-pro';
+  static const String legacyAndroid = 'derslig-pro-android';
+}
+
 class PurchaseProvider with ChangeNotifier {
   final _purchaseController = locator<PurchaseController>();
   final _logger = LoggerService.instance;
@@ -22,9 +28,34 @@ class PurchaseProvider with ChangeNotifier {
   bool _isLoggedInToRevenueCat = false;
   bool get isLoggedInToRevenueCat => _isLoggedInToRevenueCat;
 
+  SubscriptionInfo? _activeSubscription;
+  SubscriptionInfo? get activeSubscription => _activeSubscription;
+
   void selectProduct(int index) {
     selectedProductIndex = index;
     notifyListeners();
+  }
+
+  void _logSubscriptionDebug(String message) {
+    _logger.debugLog('💳 [Subscription] $message');
+  }
+
+  void _logSubscriptionStatus(SubscriptionInfo info, {required String entitlementId}) {
+    _logger.debugLog('''
+💳 ══════════════════════════════════════
+💳 SUBSCRIPTION STATUS
+💳 ══════════════════════════════════════
+💳 Entitlement: $entitlementId
+💳 Is Active: ${info.isActive}
+💳 Is Legacy: ${info.isLegacy}
+💳 Product ID: ${info.productIdentifier}
+💳 Is Trial: ${info.isTrialPeriod}
+💳 Will Renew: ${info.willRenew}
+💳 Is Sandbox: ${info.isSandbox}
+💳 Expiration: ${info.expirationDate}
+💳 Days Until Expiry: ${info.daysUntilExpiration}
+💳 ══════════════════════════════════════
+''');
   }
 
   Future<void> initPlatformState() async {
@@ -73,6 +104,8 @@ class PurchaseProvider with ChangeNotifier {
         await rc.Purchases.setDisplayName(displayName);
       }
 
+      await refreshSubscriptionStatus();
+
       notifyListeners();
     } catch (e, stackTrace) {
       _logger.logError(
@@ -92,6 +125,7 @@ class PurchaseProvider with ChangeNotifier {
 
       await rc.Purchases.logOut();
       _isLoggedInToRevenueCat = false;
+      _activeSubscription = null;
       notifyListeners();
     } catch (e, stackTrace) {
       _logger.logError(
@@ -102,18 +136,86 @@ class PurchaseProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> hasProAccess() async {
+    final subscriptionInfo = await getActiveSubscription();
+    return subscriptionInfo.isActive;
+  }
 
-  Future<SubscriptionStatus> getSubscriptionStatus() async {
+  Future<SubscriptionInfo> getActiveSubscription() async {
     try {
       final customerInfo = await getCustomerInfo();
       if (customerInfo == null) {
-        return SubscriptionStatus.unknown;
+        _logSubscriptionDebug('CustomerInfo null - returning inactive');
+        return SubscriptionInfo.inactive();
       }
 
-      if (customerInfo.entitlements.active.isNotEmpty) {
+      _logSubscriptionDebug('Active entitlements: ${customerInfo.entitlements.active.keys.toList()}');
+
+      if (customerInfo.entitlements.active.containsKey(EntitlementIds.proAccess)) {
+        final entitlement = customerInfo.entitlements.active[EntitlementIds.proAccess]!;
+        final info = _createSubscriptionInfoFromEntitlement(entitlement, isLegacy: false);
+        _logSubscriptionStatus(info, entitlementId: EntitlementIds.proAccess);
+        return info;
+      }
+
+      if (customerInfo.entitlements.active.containsKey(EntitlementIds.legacyIos)) {
+        final entitlement = customerInfo.entitlements.active[EntitlementIds.legacyIos]!;
+        final info = _createSubscriptionInfoFromEntitlement(entitlement, isLegacy: true);
+        _logSubscriptionStatus(info, entitlementId: EntitlementIds.legacyIos);
+        return info;
+      }
+
+      if (customerInfo.entitlements.active.containsKey(EntitlementIds.legacyAndroid)) {
+        final entitlement = customerInfo.entitlements.active[EntitlementIds.legacyAndroid]!;
+        final info = _createSubscriptionInfoFromEntitlement(entitlement, isLegacy: true);
+        _logSubscriptionStatus(info, entitlementId: EntitlementIds.legacyAndroid);
+        return info;
+      }
+
+      _logSubscriptionDebug('No active entitlements found - returning inactive');
+      return SubscriptionInfo.inactive();
+    } catch (e, stackTrace) {
+      _logger.logError(
+        'Subscription bilgisi alınırken hata',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return SubscriptionInfo.unknown();
+    }
+  }
+
+  SubscriptionInfo _createSubscriptionInfoFromEntitlement(
+    rc.EntitlementInfo entitlement, {
+    required bool isLegacy,
+  }) {
+    DateTime? expirationDate;
+    if (entitlement.expirationDate != null) {
+      expirationDate = DateTime.tryParse(entitlement.expirationDate!);
+    }
+
+    return SubscriptionInfo(
+      isActive: true,
+      isLegacy: isLegacy,
+      productIdentifier: entitlement.productIdentifier,
+      expirationDate: expirationDate,
+      isTrialPeriod: entitlement.periodType == rc.PeriodType.trial,
+      willRenew: entitlement.willRenew,
+      isSandbox: entitlement.isSandbox,
+    );
+  }
+
+  Future<void> refreshSubscriptionStatus() async {
+    _logSubscriptionDebug('Refreshing subscription status...');
+    _activeSubscription = await getActiveSubscription();
+    notifyListeners();
+  }
+
+  Future<SubscriptionStatus> getSubscriptionStatus() async {
+    try {
+      final subscriptionInfo = await getActiveSubscription();
+      if (subscriptionInfo.isActive) {
         return SubscriptionStatus.active;
       }
-
       return SubscriptionStatus.inactive;
     } catch (e) {
       return SubscriptionStatus.unknown;
@@ -124,22 +226,27 @@ class PurchaseProvider with ChangeNotifier {
     try {
       rc.Offerings offerings = await rc.Purchases.getOfferings();
 
-      if (offerings.current != null && offerings.current!.availablePackages.isNotEmpty) {
+      final subscriptionOffering = offerings.getOffering("derslig-pro-subscription");
+
+      if (subscriptionOffering != null && subscriptionOffering.availablePackages.isNotEmpty) {
+        currentOffering = subscriptionOffering;
+        packages = subscriptionOffering.availablePackages;
+      } else if (offerings.current != null && offerings.current!.availablePackages.isNotEmpty) {
         currentOffering = offerings.current;
         packages = offerings.current!.availablePackages;
-
-        packages.sort((a, b) {
-          String aId = a.storeProduct.identifier.toLowerCase();
-          String bId = b.storeProduct.identifier.toLowerCase();
-
-          int aMonths = _extractMonthsFromId(aId);
-          int bMonths = _extractMonthsFromId(bId);
-
-          return aMonths.compareTo(bMonths);
-        });
-
-        notifyListeners();
       }
+
+      packages.sort((a, b) {
+        String aId = a.storeProduct.identifier.toLowerCase();
+        String bId = b.storeProduct.identifier.toLowerCase();
+
+        int aMonths = _extractMonthsFromId(aId);
+        int bMonths = _extractMonthsFromId(bId);
+
+        return aMonths.compareTo(bMonths);
+      });
+
+      notifyListeners();
     } catch (e, stackTrace) {
       _logger.logError(
         'RevenueCat: Ürün detayları alınırken hata',
@@ -150,10 +257,15 @@ class PurchaseProvider with ChangeNotifier {
   }
 
   int _extractMonthsFromId(String id) {
+    if (id.contains('monthly') && !id.contains('3') && !id.contains('6') && !id.contains('12')) {
+      return 1;
+    }
+    if (id.contains('3months') || id.contains('3aylik')) return 3;
+    if (id.contains('6months') || id.contains('6aylik')) return 6;
+    if (id.contains('annual') || id.contains('12aylik') || id.contains('12months')) return 12;
+
     if (id.contains('1aylik')) return 1;
-    if (id.contains('3aylik')) return 3;
-    if (id.contains('6aylik')) return 6;
-    if (id.contains('12aylik')) return 12;
+
     return 0;
   }
 
@@ -165,32 +277,44 @@ class PurchaseProvider with ChangeNotifier {
   Future<PurchaseResultData?> purchasePackage(rc.Package package) async {
     try {
       rc.PurchaseResult result = await rc.Purchases.purchasePackage(package);
+      final customerInfo = result.customerInfo;
 
-      String? transactionId;
+      String? transactionId = result.storeTransaction.transactionIdentifier;
       DateTime purchaseDate = DateTime.now();
+      DateTime? expirationDate;
+      bool isTrialPeriod = false;
+      bool willRenew = true;
 
-      if (result.customerInfo.nonSubscriptionTransactions.isNotEmpty) {
-        final lastTransaction = result.customerInfo.nonSubscriptionTransactions.last;
-        transactionId = lastTransaction.transactionIdentifier;
+      if (customerInfo.entitlements.active.containsKey(EntitlementIds.proAccess)) {
+        final entitlement = customerInfo.entitlements.active[EntitlementIds.proAccess]!;
+
+        if (entitlement.expirationDate != null) {
+          expirationDate = DateTime.tryParse(entitlement.expirationDate!);
+        }
+
+        purchaseDate = DateTime.tryParse(entitlement.latestPurchaseDate) ?? DateTime.now();
+
+        isTrialPeriod = entitlement.periodType == rc.PeriodType.trial;
+        willRenew = entitlement.willRenew;
+      }
+
+      if (customerInfo.nonSubscriptionTransactions.isNotEmpty) {
+        final lastTransaction = customerInfo.nonSubscriptionTransactions.last;
         try {
           purchaseDate = DateTime.parse(lastTransaction.purchaseDate);
-        } catch (_) {
-          purchaseDate = DateTime.now();
-        }
+        } catch (_) {}
       }
 
-      if (transactionId == null && result.customerInfo.entitlements.active.isNotEmpty) {
-        final entitlement = result.customerInfo.entitlements.active.values.first;
-        transactionId = entitlement.productIdentifier;
-      }
-
-      transactionId ??= '${package.storeProduct.identifier}_${DateTime.now().millisecondsSinceEpoch}';
+      await refreshSubscriptionStatus();
 
       return PurchaseResultData(
-        customerInfo: result.customerInfo,
+        customerInfo: customerInfo,
         transactionId: transactionId,
         productIdentifier: package.storeProduct.identifier,
         purchaseDate: purchaseDate,
+        expirationDate: expirationDate,
+        isTrialPeriod: isTrialPeriod,
+        willRenew: willRenew,
       );
     } catch (e, stackTrace) {
       _logger.logError(
@@ -206,6 +330,29 @@ class PurchaseProvider with ChangeNotifier {
     }
   }
 
+  Future<GeneralResponseModel> confirmSubscription({
+    required String transactionId,
+    required String productIdentifier,
+    required DateTime purchaseDate,
+    DateTime? expirationDate,
+    required bool isTrialPeriod,
+    required bool willRenew,
+    required String xsrfToken,
+    required String dersligCookie,
+  }) async {
+    return await _purchaseController.confirmSubscription(
+      transactionId: transactionId,
+      productIdentifier: productIdentifier,
+      purchaseDate: purchaseDate,
+      expirationDate: expirationDate,
+      isTrialPeriod: isTrialPeriod,
+      willRenew: willRenew,
+      xsrfToken: xsrfToken,
+      dersligCookie: dersligCookie,
+    );
+  }
+
+  @Deprecated('Use confirmSubscription instead. This method is for legacy consumable products only.')
   Future<GeneralResponseModel> buyProduct({
     required String transactionId,
     required String productId,
@@ -251,6 +398,9 @@ class PurchaseProvider with ChangeNotifier {
   Future<rc.CustomerInfo?> restorePurchases() async {
     try {
       rc.CustomerInfo customerInfo = await rc.Purchases.restorePurchases();
+
+      await refreshSubscriptionStatus();
+
       return customerInfo;
     } catch (e, stackTrace) {
       _logger.logError(
@@ -261,6 +411,24 @@ class PurchaseProvider with ChangeNotifier {
       return null;
     }
   }
+
+  Future<void> openSubscriptionManagement() async {
+    try {
+      final customerInfo = await getCustomerInfo();
+      if (customerInfo?.managementURL != null) {
+        _logger.logInfo(
+          'Subscription management URL',
+          context: {'url': customerInfo!.managementURL},
+        );
+      }
+    } catch (e, stackTrace) {
+      _logger.logError(
+        'Subscription yönetim sayfası açılırken hata',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
 }
 
 class PurchaseResultData {
@@ -268,13 +436,51 @@ class PurchaseResultData {
   final String transactionId;
   final String productIdentifier;
   final DateTime purchaseDate;
+  final DateTime? expirationDate;
+  final bool isTrialPeriod;
+  final bool willRenew;
 
   PurchaseResultData({
     required this.customerInfo,
     required this.transactionId,
     required this.productIdentifier,
     required this.purchaseDate,
+    this.expirationDate,
+    this.isTrialPeriod = false,
+    this.willRenew = true,
   });
+}
+
+class SubscriptionInfo {
+  final bool isActive;
+  final bool isLegacy;
+  final String? productIdentifier;
+  final DateTime? expirationDate;
+  final bool isTrialPeriod;
+  final bool willRenew;
+  final bool isSandbox;
+  final SubscriptionStatus status;
+
+  SubscriptionInfo({
+    required this.isActive,
+    this.isLegacy = false,
+    this.productIdentifier,
+    this.expirationDate,
+    this.isTrialPeriod = false,
+    this.willRenew = true,
+    this.isSandbox = false,
+  }) : status = isActive ? SubscriptionStatus.active : SubscriptionStatus.inactive;
+
+  factory SubscriptionInfo.inactive() => SubscriptionInfo(isActive: false);
+
+  factory SubscriptionInfo.unknown() => SubscriptionInfo(
+        isActive: false,
+      );
+
+  int? get daysUntilExpiration {
+    if (expirationDate == null) return null;
+    return expirationDate!.difference(DateTime.now()).inDays;
+  }
 }
 
 enum SubscriptionStatus {

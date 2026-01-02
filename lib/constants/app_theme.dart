@@ -13,48 +13,36 @@ class AppTheme {
 
   static const appFontFamily = 'Nunito';
 
-  static TextStyle normalTextStyle(BuildContext context, double size,
-          {Color color = black}) =>
-      TextStyle(
+  static TextStyle normalTextStyle(BuildContext context, double size, {Color color = black}) => TextStyle(
         fontSize: deviceFontSize(context, size),
         fontFamily: appFontFamily,
         color: color,
       );
-  static TextStyle lightTextStyle(BuildContext context, double size,
-          {Color color = black}) =>
-      TextStyle(
+  static TextStyle lightTextStyle(BuildContext context, double size, {Color color = black}) => TextStyle(
         fontSize: deviceFontSize(context, size),
         fontFamily: appFontFamily,
         fontWeight: FontWeight.w300,
         color: color,
       );
-  static TextStyle boldTextStyle(BuildContext context, double size,
-          {Color color = black}) =>
-      TextStyle(
+  static TextStyle boldTextStyle(BuildContext context, double size, {Color color = black}) => TextStyle(
         fontSize: deviceFontSize(context, size),
         fontFamily: appFontFamily,
         fontWeight: FontWeight.bold,
         color: color,
       );
-  static TextStyle semiBoldTextStyle(BuildContext context, double size,
-          {Color color = black}) =>
-      TextStyle(
+  static TextStyle semiBoldTextStyle(BuildContext context, double size, {Color color = black}) => TextStyle(
         fontSize: deviceFontSize(context, size),
         fontFamily: appFontFamily,
         fontWeight: FontWeight.w600,
         color: color,
       );
-  static TextStyle extraBoldTextStyle(BuildContext context, double size,
-          {Color color = black}) =>
-      TextStyle(
+  static TextStyle extraBoldTextStyle(BuildContext context, double size, {Color color = black}) => TextStyle(
         fontSize: deviceFontSize(context, size),
         fontFamily: appFontFamily,
         fontWeight: FontWeight.w800,
         color: color,
       );
-  static TextStyle blackTextStyle(BuildContext context, double size,
-          {Color color = black}) =>
-      TextStyle(
+  static TextStyle blackTextStyle(BuildContext context, double size, {Color color = black}) => TextStyle(
         fontSize: deviceFontSize(context, size),
         fontFamily: appFontFamily,
         fontWeight: FontWeight.w900,
@@ -69,8 +57,7 @@ class AppTheme {
     ),
   ];
 
-  static InputDecoration borderInputDecoration({String? hintText}) =>
-      InputDecoration(
+  static InputDecoration borderInputDecoration({String? hintText}) => InputDecoration(
         hintText: hintText,
         fillColor: blue.withOpacity(0.2),
         filled: true,
@@ -94,8 +81,7 @@ class AppTheme {
         ),
       );
 
-  static InputDecoration noneBorderInputDecoration({String? hintText}) =>
-      InputDecoration(
+  static InputDecoration noneBorderInputDecoration({String? hintText}) => InputDecoration(
         hintText: hintText,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
