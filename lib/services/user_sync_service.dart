@@ -73,6 +73,13 @@ class UserSyncService {
             userId: userModel.id.toString(),
             email: userModel.email,
             displayName: '${userModel.name ?? ''} ${userModel.surname ?? ''}'.trim(),
+            phone: userModel.phone,
+            type: userModel.type,
+            isPremium: userModel.isPremium,
+            schoolLevelId: userModel.schoolLevelId,
+            gradeId: userModel.gradeId,
+            branchId: userModel.branchId,
+            schoolId: userModel.schoolId,
           );
       _logger.debugLog('🔄 [UserSync] RevenueCat updated');
     } catch (e) {

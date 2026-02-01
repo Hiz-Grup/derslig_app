@@ -15,6 +15,65 @@ class EntitlementIds {
   static const String legacyAndroid = 'derslig-pro-android';
 }
 
+class BranchInfo {
+  static const Map<int, String> branchNames = {
+    1: 'İlkokul İngilizce Öğretmeni',
+    2: 'Sınıf Öğretmeni',
+    3: 'Ortaokul Matematik Öğretmeni',
+    4: 'Fen Bilimleri Öğretmeni',
+    5: 'Türkçe Öğretmeni',
+    6: 'Sosyal Bilgiler Öğretmeni',
+    7: 'Ortaokul İngilizce Öğretmeni',
+    8: 'Lise Matematik Öğretmeni',
+    9: 'Edebiyat Öğretmeni',
+    10: 'Fizik Öğretmeni',
+    11: 'Kimya Öğretmeni',
+    12: 'Biyoloji Öğretmeni',
+    13: 'Tarih Öğretmeni',
+    14: 'Coğrafya Öğretmeni',
+    15: 'Felsefe Öğretmeni',
+    16: 'Lise İngilizce Öğretmeni',
+    17: 'Almanca Öğretmeni',
+    18: 'Beden Eğitimi Öğretmeni',
+    19: 'Müzik Öğretmeni',
+    20: 'Görsel Sanatlar Öğretmeni',
+    21: 'Teknoloji ve Tasarım Öğretmeni',
+    22: 'Din Kültürü ve Ahlak Bilgisi Öğretmeni',
+    23: 'Rehber Öğretmen',
+    24: 'İspanyolca Öğretmeni',
+  };
+
+  static String? getBranchName(int? branchId) {
+    if (branchId == null) return null;
+    return branchNames[branchId];
+  }
+}
+
+class SchoolLevelInfo {
+  static const Map<int, String> levelNames = {
+    1: 'İlkokul',
+    2: 'Ortaokul',
+    3: 'Lise',
+  };
+
+  static String? getLevelName(int? levelId) {
+    if (levelId == null) return null;
+    return levelNames[levelId];
+  }
+}
+
+class UserTypeInfo {
+  static const Map<int, String> typeNames = {
+    1: 'Öğretmen',
+    2: 'Öğrenci',
+  };
+
+  static String? getTypeName(int? typeId) {
+    if (typeId == null) return null;
+    return typeNames[typeId];
+  }
+}
+
 class PurchaseProvider with ChangeNotifier {
   final _purchaseController = locator<PurchaseController>();
   final _logger = LoggerService.instance;
@@ -86,6 +145,13 @@ class PurchaseProvider with ChangeNotifier {
     required String userId,
     String? email,
     String? displayName,
+    String? phone,
+    int? type,
+    int? isPremium,
+    int? schoolLevelId,
+    int? gradeId,
+    int? branchId,
+    int? schoolId,
   }) async {
     try {
       if (!Platform.isAndroid && !Platform.isIOS) {
@@ -102,6 +168,48 @@ class PurchaseProvider with ChangeNotifier {
 
       if (displayName != null && displayName.isNotEmpty) {
         await rc.Purchases.setDisplayName(displayName);
+      }
+
+      if (phone != null && phone.isNotEmpty) {
+        await rc.Purchases.setPhoneNumber(phone);
+      }
+
+      final Map<String, String> attributes = {};
+
+      if (gradeId != null) {
+        attributes['class'] = gradeId.toString();
+      }
+
+      if (type != null) {
+        attributes['type'] = type.toString();
+        attributes['typeName'] = UserTypeInfo.getTypeName(type) ?? '';
+      }
+
+      if (isPremium != null) {
+        attributes['isPremium'] = isPremium.toString();
+      }
+
+      if (schoolLevelId != null) {
+        attributes['schoolLevelId'] = schoolLevelId.toString();
+        attributes['schoolLevelName'] = SchoolLevelInfo.getLevelName(schoolLevelId) ?? '';
+      }
+
+      if (gradeId != null) {
+        attributes['gradeId'] = gradeId.toString();
+      }
+
+      if (type == 1 && branchId != null) {
+        attributes['branchId'] = branchId.toString();
+        attributes['branchName'] = BranchInfo.getBranchName(branchId) ?? '';
+      }
+
+      if (schoolId != null) {
+        attributes['schoolId'] = schoolId.toString();
+      }
+
+      if (attributes.isNotEmpty) {
+        await rc.Purchases.setAttributes(attributes);
+        _logger.debugLog('💳 [RevenueCat] Attributes set: $attributes');
       }
 
       await refreshSubscriptionStatus();
