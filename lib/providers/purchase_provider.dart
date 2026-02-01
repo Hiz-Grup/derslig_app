@@ -226,12 +226,26 @@ class PurchaseProvider with ChangeNotifier {
     try {
       rc.Offerings offerings = await rc.Purchases.getOfferings();
 
+      _logger.debugLog('📦 All available offerings: ${offerings.all.keys.toList()}');
+      _logger.debugLog('📦 Current offering identifier: ${offerings.current?.identifier}');
+
       final subscriptionOffering = offerings.getOffering("derslig-pro-subscription");
 
+      _logger.debugLog('📦 Subscription offering found: ${subscriptionOffering != null}');
+      if (subscriptionOffering != null) {
+        _logger.debugLog('📦 Subscription offering packages: ${subscriptionOffering.availablePackages.length}');
+        for (final pkg in subscriptionOffering.availablePackages) {
+          _logger.debugLog(
+              '📦 Package: ${pkg.identifier} -> ${pkg.storeProduct.identifier} (category: ${pkg.storeProduct.productCategory})');
+        }
+      }
+
       if (subscriptionOffering != null && subscriptionOffering.availablePackages.isNotEmpty) {
+        _logger.debugLog('📦 Using: derslig-pro-subscription offering');
         currentOffering = subscriptionOffering;
         packages = subscriptionOffering.availablePackages;
       } else if (offerings.current != null && offerings.current!.availablePackages.isNotEmpty) {
+        _logger.debugLog('📦 FALLBACK: Using current/default offering: ${offerings.current!.identifier}');
         currentOffering = offerings.current;
         packages = offerings.current!.availablePackages;
       }

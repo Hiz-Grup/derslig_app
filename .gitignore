@@ -137,3 +137,4 @@ macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_*.png # Generated icons
 .vscode/
 
 sentry.properties
+purchase-flow.md

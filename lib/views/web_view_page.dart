@@ -195,14 +195,14 @@ class _WebViewPageState extends State<WebViewPage> {
         selectedIcon: const Icon(Icons.person_rounded),
         url: "https://www.derslig.com/profilim",
       ),
-      // if ((context.watch<LoginRegisterPageProvider>().userModel?.isPremium != 1 &&
-      //     context.watch<LoginRegisterPageProvider>().userModel?.type != 1))
-      PageModel(
-        title: "Derslig Pro",
-        icon: const Icon(Icons.workspace_premium_rounded),
-        selectedIcon: const Icon(Icons.workspace_premium_rounded),
-        url: "https://www.derslig.com/",
-      ),
+      if ((context.watch<LoginRegisterPageProvider>().userModel?.isPremium != 1 &&
+          context.watch<LoginRegisterPageProvider>().userModel?.type != 1))
+        PageModel(
+          title: "Derslig Pro",
+          icon: const Icon(Icons.workspace_premium_rounded),
+          selectedIcon: const Icon(Icons.workspace_premium_rounded),
+          url: "https://www.derslig.com/",
+        ),
       PageModel(
         title: "Dersler",
         icon: const Icon(Icons.menu_book_rounded),

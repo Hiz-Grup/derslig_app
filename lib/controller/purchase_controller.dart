@@ -22,18 +22,20 @@ class PurchaseController {
     String source = 'direct',
   }) async {
     try {
+      final body = {
+        "transactionId": transactionId,
+        "productIdentifier": productIdentifier,
+        "purchaseDate": purchaseDate.toIso8601String(),
+        if (expirationDate != null) "expirationDate": expirationDate.toIso8601String(),
+        "isTrialPeriod": isTrialPeriod.toString(),
+        "willAutoRenew": willRenew.toString(),
+        "source": source,
+        "platform": Platform.isAndroid ? "android" : "ios",
+      };
+      _logger.debugLog(body.toString());
       final response = await _apiService.postRequest(
         "https://www.derslig.com/api/subscription/confirm",
-        {
-          "transactionId": transactionId,
-          "productIdentifier": productIdentifier,
-          "purchaseDate": purchaseDate.toIso8601String(),
-          if (expirationDate != null) "expirationDate": expirationDate.toIso8601String(),
-          "isTrialPeriod": isTrialPeriod.toString(),
-          "willAutoRenew": willRenew.toString(),
-          "source": source,
-          "platform": Platform.isAndroid ? "android" : "ios",
-        },
+        body,
         headers: {
           "Cookie": "XSRF-TOKEN=$xsrfToken; derslig_cookie=$dersligCookie;",
         },
