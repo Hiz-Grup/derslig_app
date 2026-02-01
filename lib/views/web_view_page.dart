@@ -26,7 +26,7 @@ class WebViewPage extends StatefulWidget {
   State<WebViewPage> createState() => _WebViewPageState();
 }
 
-class _WebViewPageState extends State<WebViewPage> {
+class _WebViewPageState extends State<WebViewPage> with WidgetsBindingObserver {
   WebViewController controller = WebViewController();
   String url = "";
   bool isWork = false;
@@ -36,6 +36,8 @@ class _WebViewPageState extends State<WebViewPage> {
 
   @override
   void initState() {
+    WidgetsBinding.instance.addObserver(this);
+
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
       params = WebKitWebViewControllerCreationParams(
@@ -67,6 +69,19 @@ class _WebViewPageState extends State<WebViewPage> {
     controller.enableZoom(false);
 
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      UserSyncService.instance.checkPremiumStatusOnResume(context);
+    }
   }
 
   final cookieManager = WebviewCookieManager();

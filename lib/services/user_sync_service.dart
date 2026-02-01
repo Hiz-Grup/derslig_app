@@ -146,4 +146,41 @@ class UserSyncService {
       _logger.debugLog('🔄 [UserSync] Clear user data failed: $e');
     }
   }
+
+  Future<void> checkPremiumStatusOnResume(BuildContext context) async {
+    if (!HiveHelpers.shouldCheckPremiumToday()) {
+      _logger.debugLog('🔄 [UserSync] Premium check skipped - already checked today');
+      return;
+    }
+
+    final loginModel = HiveHelpers.getLoginModel();
+    if (loginModel == null) {
+      _logger.debugLog('🔄 [UserSync] Premium check skipped - no login');
+      return;
+    }
+
+    try {
+      _logger.debugLog('🔄 [UserSync] Starting daily premium check...');
+
+      final result = await context.read<PurchaseProvider>().checkUser(
+            xsrfToken: loginModel.xsrfToken,
+            dersligCookie: loginModel.dersligCookie,
+          );
+
+      if (result.success) {
+        HiveHelpers.saveLastPremiumCheckTime(DateTime.now());
+        _logger.debugLog('🔄 [UserSync] Daily premium check completed successfully');
+
+        await syncUserData(context);
+      } else {
+        _logger.debugLog('🔄 [UserSync] Daily premium check failed: ${result.message}');
+      }
+    } catch (e, stackTrace) {
+      _logger.logError(
+        'Premium check on resume failed',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
 }
